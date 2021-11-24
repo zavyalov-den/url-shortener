@@ -44,14 +44,14 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		shortUrl := strings.Replace(re.FindStringSubmatch(url)[0], "/", "", -1)
-		longUrl := urls[shortUrl]
-		if longUrl == "" {
+		shortURL := strings.Replace(re.FindStringSubmatch(url)[0], "/", "", -1)
+		longURL := urls[shortURL]
+		if longURL == "" {
 			http.NotFound(w, r)
 			break
 		}
 
-		w.Header().Set("Location", longUrl)
+		w.Header().Set("Location", longURL)
 		w.WriteHeader(307)
 	default:
 		http.Error(w, "invalid request", http.StatusBadRequest)
