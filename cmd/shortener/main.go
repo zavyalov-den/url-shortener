@@ -18,7 +18,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		data, err := io.ReadAll(r.Body)
 		if err != nil {
-			log.Fatal(err)
+			http.Error(w, "invalid request", http.StatusBadRequest)
+			break
 		}
 		url := string(data)
 
@@ -31,7 +32,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusCreated)
 		_, err = w.Write([]byte(short))
 		if err != nil {
-			log.Fatal(err)
+			http.Error(w, "invalid request", http.StatusBadRequest)
+			break
 		}
 	case http.MethodGet:
 		pattern := "^/?[0-9a-f]+/?$"
