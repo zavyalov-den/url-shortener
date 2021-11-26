@@ -48,10 +48,10 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 		shortURL := strings.Replace(re.FindStringSubmatch(url)[0], "/", "", -1)
 		longURL := urls[shortURL]
-		if longURL == "" {
-			http.NotFound(w, r)
-			break
-		}
+		//if longURL == "" {
+		//	http.NotFound(w, r)
+		//	break
+		//}
 
 		w.Header().Set("Location", longURL)
 		w.WriteHeader(307)
