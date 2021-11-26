@@ -54,14 +54,14 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
+		//w.Header().Set("Location", longURL)
 		w.WriteHeader(http.StatusTemporaryRedirect)
-		_, err := w.Write(nil)
-		if err != nil {
-			http.Error(w, "invalid request", http.StatusBadRequest)
-			break
-		}
+		//_, err := w.Write(nil)
+		//if err != nil {
+		//	http.Error(w, "invalid request", http.StatusBadRequest)
+		//	break
+		//}
 
-		w.Header().Set("Location", longURL)
 	default:
 		http.Error(w, "invalid request", http.StatusBadRequest)
 	}
