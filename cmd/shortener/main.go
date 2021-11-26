@@ -30,7 +30,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		urls[short] = url
 
 		w.WriteHeader(http.StatusCreated)
-		_, err = w.Write([]byte(short))
+		_, err = w.Write([]byte("http://localhost:8080/" + short))
 		if err != nil {
 			http.Error(w, "invalid request", http.StatusBadRequest)
 			break
@@ -54,14 +54,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		//w.Header().Set("Location", longURL)
+		w.Header().Set("Location", longURL)
 		w.WriteHeader(http.StatusTemporaryRedirect)
-		//_, err := w.Write(nil)
-		//if err != nil {
-		//	http.Error(w, "invalid request", http.StatusBadRequest)
-		//	break
-		//}
-
 	default:
 		http.Error(w, "invalid request", http.StatusBadRequest)
 	}
