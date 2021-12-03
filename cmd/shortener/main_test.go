@@ -81,13 +81,14 @@ func Test_handler(t *testing.T) {
 			}
 
 			var resp *http.Response
-			defer resp.Body.Close()
 
 			switch tt.method {
 			case http.MethodGet:
 				resp, _ = cl.Get(ts.URL + tt.params)
+				defer resp.Body.Close()
 			case http.MethodPost:
 				resp, _ = cl.Post(ts.URL+tt.params, "text/plain; charset=utf8", strings.NewReader(tt.body))
+				defer resp.Body.Close()
 			default:
 				t.Fatal("Method is not allowed")
 			}
