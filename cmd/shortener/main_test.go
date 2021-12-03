@@ -81,6 +81,7 @@ func Test_handler(t *testing.T) {
 			}
 
 			var resp *http.Response
+			defer resp.Body.Close()
 
 			switch tt.method {
 			case http.MethodGet:
@@ -95,8 +96,6 @@ func Test_handler(t *testing.T) {
 			if err != nil {
 				assert.NoError(t, err, "can't read response body")
 			}
-
-			defer resp.Body.Close()
 
 			assert.Equal(t, tt.want.statusCode, resp.StatusCode, "Wrong status code")
 			assert.Equal(t, tt.want.body, string(respBody), "Wrong status code")
