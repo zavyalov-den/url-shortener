@@ -1,47 +1,34 @@
-package main
+package handler
 
 import (
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 )
 
-type Want struct {
+type want struct {
 	statusCode int
 	body       string
 }
 
-func Test_handler(t *testing.T) {
+func Test_GetHandler(t *testing.T) {
 	tests := []struct {
 		name   string
 		urls   map[string]string
-		method string
 		body   string
 		params string
-		want   Want
+		want   want
 	}{
-		{
-			"shorten",
-			getURLs(false),
-			http.MethodPost,
-			"https://yandex.ru",
-			"",
-			Want{
-				statusCode: 201,
-				body:       "http://localhost:8080/e9db20b2",
-			},
-		},
 		{
 			"expand",
 			getURLs(true),
-			http.MethodGet,
 			"",
 			"/e9db20b2",
-			Want{
+			want{
 				statusCode: 307,
 				body:       "",
 			},
@@ -49,10 +36,9 @@ func Test_handler(t *testing.T) {
 		{
 			"returns 404 on url that doesn't exist",
 			getURLs(false),
-			http.MethodGet,
 			"",
 			"/asdfa",
-			Want{
+			want{
 				statusCode: 404,
 				body:       "404 page not found\n",
 			},
@@ -60,10 +46,9 @@ func Test_handler(t *testing.T) {
 		{
 			"returns 404 on invalid request URL",
 			getURLs(false),
-			http.MethodGet,
 			"",
 			"/wrong/url",
-			Want{
+			want{
 				statusCode: 404,
 				body:       "404 page not found\n",
 				//body:       "invalid request URL\n",
@@ -73,25 +58,17 @@ func Test_handler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ts := newTestServer(tt.urls)
+			ts := newGetTestServer(tt.urls)
 
 			cl := ts.Client()
 			cl.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 				return http.ErrUseLastResponse
 			}
 
-			var resp *http.Response
+			resp, err := cl.Get(ts.URL + tt.params)
+			require.NoError(t, err)
 
-			switch tt.method {
-			case http.MethodGet:
-				resp, _ = cl.Get(ts.URL + tt.params)
-				defer resp.Body.Close()
-			case http.MethodPost:
-				resp, _ = cl.Post(ts.URL+tt.params, "text/plain; charset=utf8", strings.NewReader(tt.body))
-				defer resp.Body.Close()
-			default:
-				t.Fatal("Method is not allowed")
-			}
+			defer resp.Body.Close()
 
 			respBody, err := io.ReadAll(resp.Body)
 			if err != nil {
@@ -113,11 +90,10 @@ func getURLs(notEmpty bool) map[string]string {
 	return make(map[string]string)
 }
 
-func newTestServer(urls map[string]string) *httptest.Server {
+func newGetTestServer(urls map[string]string) *httptest.Server {
 	r := chi.NewRouter()
 
-	r.Get("/{shortUrl}", getHandler(urls))
-	r.Post("/", postHandler(urls))
+	r.Get("/{shortUrl}", Get(urls))
 
 	return httptest.NewServer(r)
 }
