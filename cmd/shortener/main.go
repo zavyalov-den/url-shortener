@@ -13,6 +13,8 @@ func main() {
 	urls := repo.NewRepo()
 
 	r := chi.NewRouter()
+
+	r.Post("/api/shorten", handler.ShortenPost(urls))
 	r.Get("/{shortUrl}", handler.Get(urls))
 	r.Post("/", handler.Post(urls))
 
