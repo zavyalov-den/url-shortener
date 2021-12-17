@@ -20,21 +20,18 @@ type response struct {
 
 func ShortenPost(db *storage.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// {"url": "<some_url>"}
-		// {"result": "<shorten_url>"}
-		// Content-Type
-		// HTTP content negotiation
 		w.Header().Set("Content-Type", "application/json")
 
 		defer r.Body.Close()
+
+		req := &request{}
+		res := &response{}
 
 		data, err := io.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, "request body is not a valid json", http.StatusBadRequest)
 			return
 		}
-		req := &request{}
-		res := &response{}
 
 		err = json.Unmarshal(data, req)
 		if err != nil {

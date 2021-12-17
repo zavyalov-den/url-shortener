@@ -10,6 +10,14 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+//флаг -a, отвечающий за адрес запуска HTTP-сервера (переменная SERVER_ADDRESS);
+//флаг -b, отвечающий за базовый адрес результирующего сокращённого URL (переменная BASE_URL);
+//флаг -f, отвечающий за путь до файла с сокращёнными URL (переменная FILE_STORAGE_PATH).
+
+func init() {
+
+}
+
 func main() {
 	st := storage.NewStorage(true)
 
