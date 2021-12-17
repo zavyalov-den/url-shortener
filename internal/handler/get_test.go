@@ -4,6 +4,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/zavyalov-den/url-shortener/internal/storage"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -18,14 +19,14 @@ type want struct {
 func Test_GetHandler(t *testing.T) {
 	tests := []struct {
 		name   string
-		urls   map[string]string
+		db     *storage.DB
 		body   string
 		params string
 		want   want
 	}{
 		{
 			"expand",
-			getURLs(true),
+			newTestDb(true),
 			"",
 			"/e9db20b2",
 			want{
@@ -35,7 +36,7 @@ func Test_GetHandler(t *testing.T) {
 		},
 		{
 			"returns 404 on url that doesn't exist",
-			getURLs(false),
+			newTestDb(false),
 			"",
 			"/asdfa",
 			want{
@@ -45,7 +46,7 @@ func Test_GetHandler(t *testing.T) {
 		},
 		{
 			"returns 404 on invalid request URL",
-			getURLs(false),
+			newTestDb(false),
 			"",
 			"/wrong/url",
 			want{
@@ -58,7 +59,7 @@ func Test_GetHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ts := newGetTestServer(tt.urls)
+			ts := newGetTestServer(tt.db)
 
 			cl := ts.Client()
 			cl.CheckRedirect = func(req *http.Request, via []*http.Request) error {
@@ -81,19 +82,19 @@ func Test_GetHandler(t *testing.T) {
 	}
 }
 
-func getURLs(notEmpty bool) map[string]string {
+func newTestDb(notEmpty bool) *storage.DB {
+	db := storage.NewStorage(false)
 	if notEmpty {
-		return map[string]string{
-			"e9db20b2": "https://yandex.ru",
-		}
+		db.Save("e9db20b2", "https://yandex.ru")
+		return db
 	}
-	return make(map[string]string)
+	return db
 }
 
-func newGetTestServer(urls map[string]string) *httptest.Server {
+func newGetTestServer(db *storage.DB) *httptest.Server {
 	r := chi.NewRouter()
 
-	r.Get("/{shortUrl}", Get(urls))
+	r.Get("/{shortUrl}", Get(db))
 
 	return httptest.NewServer(r)
 }

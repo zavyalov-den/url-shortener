@@ -4,6 +4,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/zavyalov-den/url-shortener/internal/config"
+	"github.com/zavyalov-den/url-shortener/internal/storage"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -14,24 +16,24 @@ import (
 func Test_PostHandler(t *testing.T) {
 	tests := []struct {
 		name   string
-		urls   map[string]string
+		db     *storage.DB
 		body   string
 		params string
 		want   want
 	}{
 		{
 			"shorten",
-			getURLs(false),
+			newTestDb(false),
 			"https://yandex.ru",
 			"",
 			want{
 				statusCode: 201,
-				body:       "http://localhost:8080/e9db20b2",
+				body:       config.C.BaseURL + "/e9db20b2",
 			},
 		},
 		{
 			"shorten negative",
-			getURLs(false),
+			newTestDb(false),
 			"",
 			"",
 			want{
@@ -43,7 +45,7 @@ func Test_PostHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ts := newPostTestServer(tt.urls)
+			ts := newPostTestServer(tt.db)
 
 			cl := ts.Client()
 			cl.CheckRedirect = func(req *http.Request, via []*http.Request) error {
@@ -68,10 +70,10 @@ func Test_PostHandler(t *testing.T) {
 	}
 }
 
-func newPostTestServer(urls map[string]string) *httptest.Server {
+func newPostTestServer(db *storage.DB) *httptest.Server {
 	r := chi.NewRouter()
 
-	r.Post("/", Post(urls))
+	r.Post("/", Post(db))
 
 	return httptest.NewServer(r)
 }

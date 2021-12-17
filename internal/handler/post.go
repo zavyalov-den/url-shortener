@@ -1,12 +1,14 @@
 package handler
 
 import (
+	"github.com/zavyalov-den/url-shortener/internal/config"
 	"github.com/zavyalov-den/url-shortener/internal/service"
+	"github.com/zavyalov-den/url-shortener/internal/storage"
 	"io"
 	"net/http"
 )
 
-func Post(urls map[string]string) http.HandlerFunc {
+func Post(db *storage.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
@@ -23,10 +25,10 @@ func Post(urls map[string]string) http.HandlerFunc {
 
 		short := service.Shorten(data)
 
-		urls[short] = string(data)
+		db.Save(short, string(data))
 
 		w.WriteHeader(http.StatusCreated)
-		_, err = w.Write([]byte("http://localhost:8080/" + short))
+		_, err = w.Write([]byte(config.C.BaseURL + "/" + short))
 		if err != nil {
 			http.Error(w, "invalid requestURL", http.StatusBadRequest)
 			return

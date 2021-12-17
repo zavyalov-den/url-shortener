@@ -2,7 +2,9 @@ package handler
 
 import (
 	"encoding/json"
+	"github.com/zavyalov-den/url-shortener/internal/config"
 	"github.com/zavyalov-den/url-shortener/internal/service"
+	"github.com/zavyalov-den/url-shortener/internal/storage"
 	"io"
 	"net/http"
 )
@@ -16,7 +18,7 @@ type response struct {
 	Error  string `json:"error,omitempty"`
 }
 
-func ShortenPost(urls map[string]string) http.HandlerFunc {
+func ShortenPost(db *storage.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// {"url": "<some_url>"}
 		// {"result": "<shorten_url>"}
@@ -45,7 +47,7 @@ func ShortenPost(urls map[string]string) http.HandlerFunc {
 		}
 
 		short := service.Shorten([]byte(req.Url))
-		res.Result = "http://localhost:8080/" + short
+		res.Result = config.C.BaseURL + "/" + short
 
 		resBody, err := json.Marshal(res)
 		if err != nil {
@@ -53,10 +55,9 @@ func ShortenPost(urls map[string]string) http.HandlerFunc {
 			return
 		}
 
-		urls[short] = string(data)
+		db.Save(short, req.Url)
 
 		w.WriteHeader(http.StatusCreated)
-		//_, err = w.Write([]byte("http://localhost:8080/" + short))
 		_, err = w.Write(resBody)
 		if err != nil {
 			http.Error(w, "invalid requestURL", http.StatusBadRequest)

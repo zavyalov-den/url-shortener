@@ -1,52 +1,55 @@
 package handler
 
 import (
+	"fmt"
+	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/zavyalov-den/url-shortener/internal/config"
+	"github.com/zavyalov-den/url-shortener/internal/storage"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 )
 
 func Test_shortenPost(t *testing.T) {
-	// todo
-
 	tests := []struct {
 		name string
-		urls map[string]string
+		db   *storage.DB
 		body string
 		want want
 	}{
 		{
 			"shorten",
-			getURLs(false),
+			newTestDb(false),
 			`{"url": "https://yandex.ru"}`,
 			want{
 				statusCode: 201,
-				body:       `{"result": "http://localhost:8080/e9db20b2"}`,
+				body:       fmt.Sprintf(`{"result":"%s/e9db20b2"}`, config.C.BaseURL),
 			},
 		},
 		{
 			"shorten negative",
-			getURLs(false),
+			newTestDb(false),
 			"",
 			want{
 				statusCode: 400,
-				body:       "request body must not be empty\n",
+				body:       "{\"error\":\"request body is not a valid json\"}\n",
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ts := newPostTestServer(tt.urls)
+			ts := newShortenPostTestServer(tt.db)
 
 			cl := ts.Client()
 
 			var resp *http.Response
 
-			resp, err := cl.Post(ts.URL, "application/json", strings.NewReader(tt.body))
+			resp, err := cl.Post(ts.URL+"/api/shorten", "application/json", strings.NewReader(tt.body))
 			require.NoError(t, err)
 
 			defer resp.Body.Close()
@@ -59,4 +62,12 @@ func Test_shortenPost(t *testing.T) {
 
 		})
 	}
+}
+
+func newShortenPostTestServer(db *storage.DB) *httptest.Server {
+	r := chi.NewRouter()
+
+	r.Post("/api/shorten", ShortenPost(db))
+
+	return httptest.NewServer(r)
 }
