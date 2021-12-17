@@ -24,6 +24,7 @@ func ShortenPost(db *storage.DB) http.HandlerFunc {
 		// {"result": "<shorten_url>"}
 		// Content-Type
 		// HTTP content negotiation
+		w.Header().Set("Content-Type", "application/json")
 
 		defer r.Body.Close()
 
@@ -58,7 +59,6 @@ func ShortenPost(db *storage.DB) http.HandlerFunc {
 		db.Save(short, req.Url)
 
 		w.WriteHeader(http.StatusCreated)
-		w.Header().Set("Content-Type", "application/json")
 		_, err = w.Write(resBody)
 		if err != nil {
 			http.Error(w, "invalid requestURL", http.StatusBadRequest)
