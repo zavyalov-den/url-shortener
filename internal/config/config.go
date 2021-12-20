@@ -2,6 +2,7 @@ package config
 
 import (
 	"flag"
+	"fmt"
 	"github.com/caarlos0/env/v6"
 )
 
@@ -19,21 +20,26 @@ func parseConfig() *config {
 		panic("failed to parse config")
 	}
 
-	serverAddress := flag.String("a", ":8080", "server address")
-	baseURL := flag.String("b", "http://localhost:8080", "base url")
-	fileStoragePath := flag.String("f", "./storage.json", "file storage path")
+	serverAddress := flag.String("a", "", "server address")
+	baseURL := flag.String("b", "", "base url")
+	fileStoragePath := flag.String("f", "", "file storage path")
 
 	flag.Parse()
 
-	if serverAddress != nil {
+	fmt.Println(cfg)
+
+	//if serverAddress != nil {
+	if *serverAddress != "" {
 		cfg.ServerAddress = *serverAddress
 	}
-	if baseURL != nil {
+	if *baseURL != "" {
 		cfg.BaseURL = *baseURL
 	}
-	if fileStoragePath != nil {
+	if *fileStoragePath != "" {
 		cfg.FileStoragePath = *fileStoragePath
 	}
+
+	fmt.Println(cfg)
 
 	return cfg
 }
