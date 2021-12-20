@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"github.com/zavyalov-den/url-shortener/internal/config"
 	"github.com/zavyalov-den/url-shortener/internal/handler"
 	"github.com/zavyalov-den/url-shortener/internal/storage"
@@ -20,6 +21,8 @@ func init() {
 
 func main() {
 	st := storage.NewStorage(true)
+
+	flag.Parse()
 
 	r := chi.NewRouter()
 
