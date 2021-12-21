@@ -2,9 +2,8 @@ package main
 
 import "C"
 import (
-	"flag"
 	"fmt"
-	"github.com/caarlos0/env/v6"
+	"github.com/zavyalov-den/url-shortener/internal/config"
 	"github.com/zavyalov-den/url-shortener/internal/handler"
 	"github.com/zavyalov-den/url-shortener/internal/storage"
 	"log"
@@ -13,36 +12,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-type config struct {
-	ServerAddress   string `env:"SERVER_ADDRESS" envDefault:":8080"`
-	BaseURL         string `env:"BASE_URL" envDefault:"http://localhost:8080"`
-	FileStoragePath string `env:"FILE_STORAGE_PATH" envDefault:"./storage.json"`
-}
-
-var cfg = &config{}
-
-func init() {
-	if err := env.Parse(cfg); err != nil {
-		fmt.Println("failed to parse config: " + err.Error())
-	}
-
-	serverAddress := flag.String("a", "", "server address")
-	baseURL := flag.String("b", "", "base url")
-	fileStoragePath := flag.String("f", "", "file storage path")
-
-	flag.Parse()
-
-	if serverAddress != nil && *serverAddress != "" {
-		cfg.ServerAddress = *serverAddress
-	}
-	if baseURL != nil && *baseURL != "" {
-		cfg.BaseURL = *baseURL
-	}
-	if fileStoragePath != nil && *fileStoragePath != "" {
-		cfg.FileStoragePath = *fileStoragePath
-	}
-
-}
+var cfg = config.Conf
 
 func main() {
 	st := storage.NewStorage(false)
