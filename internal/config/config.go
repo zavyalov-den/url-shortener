@@ -16,11 +16,11 @@ func init() {
 		fmt.Println("failed to parse config: " + err.Error())
 	}
 
-	serverAddress := flag.String("a", ":8080", "server address")
-	baseURL := flag.String("b", "http://localhost:8080", "base url")
-	fileStoragePath := flag.String("f", "./storage.json", "file storage path")
+	serverAddress := flag.String("a", "", "server address")
+	baseURL := flag.String("b", "", "base url")
+	fileStoragePath := flag.String("f", "", "file storage path")
 
-	flag.Parse()
+	//flag.Parse()
 
 	if serverAddress != nil && *serverAddress != "" {
 		Conf.ServerAddress = *serverAddress
