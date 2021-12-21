@@ -6,13 +6,15 @@ import (
 	"github.com/caarlos0/env/v6"
 )
 
-var Conf = &config{}
+var Conf = parseConfig()
 
 // Раньше здесь была вся логика по обработке переменных среды и флагам,
 // но переехала в main, т.к. при запуске тестов через go test ./... возникала ошибка
 
-func init() {
-	if err := env.Parse(Conf); err != nil {
+func parseConfig() *config {
+	cfg := &config{}
+
+	if err := env.Parse(cfg); err != nil {
 		fmt.Println("failed to parse config: " + err.Error())
 	}
 
@@ -20,18 +22,19 @@ func init() {
 	baseURL := flag.String("b", "", "base url")
 	fileStoragePath := flag.String("f", "", "file storage path")
 
-	//flag.Parse()
+	flag.Parse()
 
 	if serverAddress != nil && *serverAddress != "" {
-		Conf.ServerAddress = *serverAddress
+		cfg.ServerAddress = *serverAddress
 	}
 	if baseURL != nil && *baseURL != "" {
-		Conf.BaseURL = *baseURL
+		cfg.BaseURL = *baseURL
 	}
 	if fileStoragePath != nil && *fileStoragePath != "" {
-		Conf.FileStoragePath = *fileStoragePath
+		cfg.FileStoragePath = *fileStoragePath
 	}
 
+	return cfg
 }
 
 type config struct {
