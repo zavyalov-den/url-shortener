@@ -1,7 +1,9 @@
 package main
 
+import "C"
 import (
 	"flag"
+	"github.com/caarlos0/env/v6"
 	"github.com/zavyalov-den/url-shortener/internal/config"
 	"github.com/zavyalov-den/url-shortener/internal/handler"
 	"github.com/zavyalov-den/url-shortener/internal/storage"
@@ -11,12 +13,27 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-//флаг -a, отвечающий за адрес запуска HTTP-сервера (переменная SERVER_ADDRESS);
-//флаг -b, отвечающий за базовый адрес результирующего сокращённого URL (переменная BASE_URL);
-//флаг -f, отвечающий за путь до файла с сокращёнными URL (переменная FILE_STORAGE_PATH).
-
 func init() {
+	cfg := config.Conf
+	if err := env.Parse(cfg); err != nil {
+		panic("failed to parse config: " + err.Error())
+	}
 
+	serverAddress := flag.String("a", "", "server address")
+	baseURL := flag.String("b", "", "base url")
+	fileStoragePath := flag.String("f", "", "file storage path")
+
+	flag.Parse()
+
+	if *serverAddress != "" {
+		cfg.ServerAddress = *serverAddress
+	}
+	if *baseURL != "" {
+		cfg.BaseURL = *baseURL
+	}
+	if *fileStoragePath != "" {
+		cfg.FileStoragePath = *fileStoragePath
+	}
 }
 
 func main() {
@@ -30,5 +47,5 @@ func main() {
 	r.Get("/{shortUrl}", handler.Get(st))
 	r.Post("/", handler.Post(st))
 
-	log.Fatal(http.ListenAndServe(config.C.ServerAddress, r))
+	log.Fatal(http.ListenAndServe(config.Conf.ServerAddress, r))
 }

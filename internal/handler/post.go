@@ -28,7 +28,7 @@ func Post(db *storage.DB) http.HandlerFunc {
 		db.Save(short, string(data))
 
 		w.WriteHeader(http.StatusCreated)
-		_, err = w.Write([]byte(config.C.BaseURL + "/" + short))
+		_, err = w.Write([]byte(config.Conf.BaseURL + "/" + short))
 		if err != nil {
 			http.Error(w, "invalid requestURL", http.StatusBadRequest)
 			return

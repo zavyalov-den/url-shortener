@@ -3,17 +3,21 @@ package storage
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/zavyalov-den/url-shortener/internal/config"
 	"os"
+
+	"github.com/zavyalov-den/url-shortener/internal/config"
 )
 
 type DB struct {
-	db map[string]string
+	db    map[string]string
+	debug bool
 }
 
 func (db *DB) Save(key, value string) {
 	db.db[key] = value
-	db.saveToFile()
+	if !db.debug {
+		db.saveToFile()
+	}
 }
 
 func (db *DB) Get(key string) (string, error) {
@@ -31,9 +35,11 @@ func (db *DB) saveToFile() {
 	defer file.Close()
 
 	flag := os.O_CREATE | os.O_WRONLY | os.O_TRUNC
-	file, err := os.OpenFile(config.C.FileStoragePath, flag, 0755)
+	file, err := os.OpenFile(config.Conf.FileStoragePath, flag, 0777)
 	if err != nil {
-		panic("failed to open storage file")
+		if _, createErr := os.Create(config.Conf.FileStoragePath); createErr != nil {
+			panic("can't read or create storage file.")
+		}
 	}
 
 	data, err := json.Marshal(db.db)
@@ -50,11 +56,12 @@ func (db *DB) saveToFile() {
 func (db *DB) readFromFile() {
 	storage := make(map[string]string)
 
-	data, err := os.ReadFile(config.C.FileStoragePath)
+	data, err := os.ReadFile(config.Conf.FileStoragePath)
 	if err != nil {
-		if _, createErr := os.Create(config.C.FileStoragePath); createErr != nil {
+		if _, createErr := os.Create(config.Conf.FileStoragePath); createErr != nil {
 			panic("can't read or create storage file.")
 		}
+		panic(err)
 	}
 
 	err = json.Unmarshal(data, &storage)
@@ -65,13 +72,14 @@ func (db *DB) readFromFile() {
 	db.db = storage
 }
 
-func NewStorage(fileStorage bool) *DB {
+func NewStorage(debug bool) *DB {
 	storage := &DB{
 		db: make(map[string]string),
 	}
-	if fileStorage {
+	if !debug {
 		storage.readFromFile()
 	}
 
+	storage.debug = debug
 	return storage
 }

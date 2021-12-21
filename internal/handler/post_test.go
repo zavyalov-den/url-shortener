@@ -23,17 +23,17 @@ func Test_PostHandler(t *testing.T) {
 	}{
 		{
 			"shorten",
-			newTestDb(false),
+			newTestDB(false),
 			"https://yandex.ru",
 			"",
 			want{
 				statusCode: 201,
-				body:       config.C.BaseURL + "/e9db20b2",
+				body:       config.Conf.BaseURL + "/e9db20b2",
 			},
 		},
 		{
 			"shorten negative",
-			newTestDb(false),
+			newTestDB(false),
 			"",
 			"",
 			want{

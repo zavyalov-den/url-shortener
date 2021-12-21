@@ -26,7 +26,7 @@ func Test_GetHandler(t *testing.T) {
 	}{
 		{
 			"expand",
-			newTestDb(true),
+			newTestDB(true),
 			"",
 			"/e9db20b2",
 			want{
@@ -36,7 +36,7 @@ func Test_GetHandler(t *testing.T) {
 		},
 		{
 			"returns 404 on url that doesn't exist",
-			newTestDb(false),
+			newTestDB(false),
 			"",
 			"/asdfa",
 			want{
@@ -46,7 +46,7 @@ func Test_GetHandler(t *testing.T) {
 		},
 		{
 			"returns 404 on invalid request URL",
-			newTestDb(false),
+			newTestDB(false),
 			"",
 			"/wrong/url",
 			want{
@@ -82,8 +82,8 @@ func Test_GetHandler(t *testing.T) {
 	}
 }
 
-func newTestDb(notEmpty bool) *storage.DB {
-	db := storage.NewStorage(false)
+func newTestDB(notEmpty bool) *storage.DB {
+	db := storage.NewStorage(true)
 	if notEmpty {
 		db.Save("e9db20b2", "https://yandex.ru")
 		return db

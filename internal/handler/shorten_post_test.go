@@ -23,16 +23,16 @@ func Test_shortenPost(t *testing.T) {
 	}{
 		{
 			"shorten",
-			newTestDb(false),
+			newTestDB(false),
 			`{"url": "https://yandex.ru"}`,
 			want{
 				statusCode: 201,
-				body:       fmt.Sprintf(`{"result":"%s/e9db20b2"}`, config.C.BaseURL),
+				body:       fmt.Sprintf(`{"result":"%s/e9db20b2"}`, config.Conf.BaseURL),
 			},
 		},
 		{
 			"shorten negative",
-			newTestDb(false),
+			newTestDB(false),
 			"",
 			want{
 				statusCode: 400,
