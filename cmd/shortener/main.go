@@ -3,6 +3,7 @@ package main
 import "C"
 import (
 	"flag"
+	"fmt"
 	"github.com/caarlos0/env/v6"
 	"github.com/zavyalov-den/url-shortener/internal/config"
 	"github.com/zavyalov-den/url-shortener/internal/handler"
@@ -13,8 +14,9 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+var cfg = config.Conf
+
 func init() {
-	cfg := config.Conf
 	if err := env.Parse(cfg); err != nil {
 		panic("failed to parse config: " + err.Error())
 	}
@@ -34,6 +36,8 @@ func init() {
 	if *fileStoragePath != "" {
 		cfg.FileStoragePath = *fileStoragePath
 	}
+
+	fmt.Println(cfg)
 }
 
 func main() {
@@ -47,5 +51,5 @@ func main() {
 	r.Get("/{shortUrl}", handler.Get(st))
 	r.Post("/", handler.Post(st))
 
-	log.Fatal(http.ListenAndServe(config.Conf.ServerAddress, r))
+	log.Fatal(http.ListenAndServe(cfg.ServerAddress, r))
 }
