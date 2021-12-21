@@ -37,7 +37,6 @@ func init() {
 		cfg.FileStoragePath = *fileStoragePath
 	}
 
-	fmt.Println(cfg)
 }
 
 func main() {
@@ -49,5 +48,6 @@ func main() {
 	r.Get("/{shortUrl}", handler.Get(st))
 	r.Post("/", handler.Post(st))
 
+	fmt.Println(cfg)
 	log.Fatal(http.ListenAndServe(cfg.ServerAddress, r))
 }
