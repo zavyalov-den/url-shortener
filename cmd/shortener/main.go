@@ -43,8 +43,6 @@ func init() {
 func main() {
 	st := storage.NewStorage(false)
 
-	flag.Parse()
-
 	r := chi.NewRouter()
 
 	r.Post("/api/shorten", handler.ShortenPost(st))
