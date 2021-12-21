@@ -67,7 +67,7 @@ func (db *DB) readFromFile() {
 
 	err = json.Unmarshal(data, &storage)
 	if err != nil {
-		// who cares
+		fmt.Println(err.Error())
 	}
 
 	db.db = storage
