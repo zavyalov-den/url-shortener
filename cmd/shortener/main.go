@@ -18,7 +18,7 @@ var cfg = config.Conf
 
 func init() {
 	if err := env.Parse(cfg); err != nil {
-		panic("failed to parse config: " + err.Error())
+		fmt.Println("failed to parse config: " + err.Error())
 	}
 
 	serverAddress := flag.String("a", "", "server address")
