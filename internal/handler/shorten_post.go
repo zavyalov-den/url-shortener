@@ -10,7 +10,7 @@ import (
 )
 
 type request struct {
-	Url string `json:"url"`
+	URL string `json:"url"`
 }
 
 type response struct {
@@ -36,15 +36,15 @@ func ShortenPost(db *storage.DB) http.HandlerFunc {
 		err = json.Unmarshal(data, req)
 		if err != nil {
 			res.Error = "request body is not a valid json"
-			errData, errJson := json.Marshal(res)
-			if errJson != nil {
+			errData, errJSON := json.Marshal(res)
+			if errJSON != nil {
 				panic(err.Error())
 			}
 			http.Error(w, string(errData), http.StatusBadRequest)
 			return
 		}
 
-		short := service.Shorten([]byte(req.Url))
+		short := service.Shorten([]byte(req.URL))
 		res.Result = config.C.BaseURL + "/" + short
 
 		resBody, err := json.Marshal(res)
@@ -53,7 +53,7 @@ func ShortenPost(db *storage.DB) http.HandlerFunc {
 			return
 		}
 
-		db.Save(short, req.Url)
+		db.Save(short, req.URL)
 
 		w.WriteHeader(http.StatusCreated)
 		_, err = w.Write(resBody)

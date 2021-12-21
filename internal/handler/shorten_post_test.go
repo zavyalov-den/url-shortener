@@ -23,7 +23,7 @@ func Test_shortenPost(t *testing.T) {
 	}{
 		{
 			"shorten",
-			newTestDb(false),
+			newTestDB(false),
 			`{"url": "https://yandex.ru"}`,
 			want{
 				statusCode: 201,
@@ -32,7 +32,7 @@ func Test_shortenPost(t *testing.T) {
 		},
 		{
 			"shorten negative",
-			newTestDb(false),
+			newTestDB(false),
 			"",
 			want{
 				statusCode: 400,

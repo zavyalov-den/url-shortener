@@ -23,7 +23,7 @@ func Test_PostHandler(t *testing.T) {
 	}{
 		{
 			"shorten",
-			newTestDb(false),
+			newTestDB(false),
 			"https://yandex.ru",
 			"",
 			want{
@@ -33,7 +33,7 @@ func Test_PostHandler(t *testing.T) {
 		},
 		{
 			"shorten negative",
-			newTestDb(false),
+			newTestDB(false),
 			"",
 			"",
 			want{
