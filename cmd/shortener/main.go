@@ -27,13 +27,13 @@ func init() {
 
 	flag.Parse()
 
-	if *serverAddress != "" {
+	if *serverAddress != "" && serverAddress != nil {
 		cfg.ServerAddress = *serverAddress
 	}
-	if *baseURL != "" {
+	if *baseURL != "" && baseURL != nil {
 		cfg.BaseURL = *baseURL
 	}
-	if *fileStoragePath != "" {
+	if *fileStoragePath != "" && fileStoragePath != nil {
 		cfg.FileStoragePath = *fileStoragePath
 	}
 
