@@ -37,7 +37,7 @@ func init() {
 }
 
 func main() {
-	st := storage.NewStorage(true)
+	st := storage.NewStorage(false)
 
 	flag.Parse()
 
