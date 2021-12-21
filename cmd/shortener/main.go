@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"github.com/caarlos0/env/v6"
-	"github.com/zavyalov-den/url-shortener/internal/config"
 	"github.com/zavyalov-den/url-shortener/internal/handler"
 	"github.com/zavyalov-den/url-shortener/internal/storage"
 	"log"
@@ -14,7 +13,13 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-var cfg = config.Conf
+type config struct {
+	ServerAddress   string `env:"SERVER_ADDRESS" envDefault:":8080"`
+	BaseURL         string `env:"BASE_URL" envDefault:"http://localhost:8080"`
+	FileStoragePath string `env:"FILE_STORAGE_PATH" envDefault:"./storage.json"`
+}
+
+var cfg = &config{}
 
 func init() {
 	if err := env.Parse(cfg); err != nil {
