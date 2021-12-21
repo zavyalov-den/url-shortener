@@ -30,6 +30,7 @@ func ShortenPost(db *storage.DB) http.HandlerFunc {
 		data, err := io.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, "request body is not a valid json", http.StatusBadRequest)
+
 			return
 		}
 
@@ -41,6 +42,7 @@ func ShortenPost(db *storage.DB) http.HandlerFunc {
 				panic(err.Error())
 			}
 			http.Error(w, string(errData), http.StatusBadRequest)
+
 			return
 		}
 

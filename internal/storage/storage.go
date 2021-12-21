@@ -61,6 +61,7 @@ func (db *DB) readFromFile() {
 		if _, createErr := os.Create(config.Conf.FileStoragePath); createErr != nil {
 			panic("can't read or create storage file.")
 		}
+
 		panic(err)
 	}
 
@@ -81,5 +82,6 @@ func NewStorage(debug bool) *DB {
 	}
 
 	storage.debug = debug
+
 	return storage
 }
