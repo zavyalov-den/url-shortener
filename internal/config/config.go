@@ -24,7 +24,7 @@ func parseConfig() *config {
 	baseURL := flag.String("b", "", "base url")
 	fileStoragePath := flag.String("f", "", "file storage path")
 
-	//flag.Parse()
+	flag.Parse()
 
 	fmt.Println(cfg)
 
