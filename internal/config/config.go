@@ -2,7 +2,6 @@ package config
 
 import (
 	"flag"
-	"fmt"
 	"github.com/caarlos0/env/v6"
 )
 
@@ -26,20 +25,15 @@ func parseConfig() *config {
 
 	flag.Parse()
 
-	fmt.Println(cfg)
-
-	//if serverAddress != nil {
-	if *serverAddress != "" {
+	if serverAddress != nil && *serverAddress != "" {
 		cfg.ServerAddress = *serverAddress
 	}
-	if *baseURL != "" {
+	if baseURL != nil && *baseURL != "" {
 		cfg.BaseURL = *baseURL
 	}
-	if *fileStoragePath != "" {
+	if fileStoragePath != nil && *fileStoragePath != "" {
 		cfg.FileStoragePath = *fileStoragePath
 	}
-
-	fmt.Println(cfg)
 
 	return cfg
 }
