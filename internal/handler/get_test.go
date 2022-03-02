@@ -1,0 +1,100 @@
+package handler
+
+import (
+	"github.com/go-chi/chi/v5"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/zavyalov-den/url-shortener/internal/storage"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+)
+
+type want struct {
+	statusCode int
+	body       string
+}
+
+func Test_GetHandler(t *testing.T) {
+	tests := []struct {
+		name   string
+		db     *storage.DB
+		body   string
+		params string
+		want   want
+	}{
+		{
+			"expand",
+			newTestDB(true),
+			"",
+			"/e9db20b2",
+			want{
+				statusCode: 307,
+				body:       "",
+			},
+		},
+		{
+			"returns 404 on url that doesn't exist",
+			newTestDB(false),
+			"",
+			"/asdfa",
+			want{
+				statusCode: 404,
+				body:       "404 page not found\n",
+			},
+		},
+		{
+			"returns 404 on invalid request URL",
+			newTestDB(false),
+			"",
+			"/wrong/url",
+			want{
+				statusCode: 404,
+				body:       "404 page not found\n",
+				//body:       "invalid request URL\n",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ts := newGetTestServer(tt.db)
+
+			cl := ts.Client()
+			cl.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+				return http.ErrUseLastResponse
+			}
+
+			resp, err := cl.Get(ts.URL + tt.params)
+			require.NoError(t, err)
+
+			defer resp.Body.Close()
+
+			respBody, err := io.ReadAll(resp.Body)
+			if err != nil {
+				assert.NoError(t, err, "can't read response body")
+			}
+
+			assert.Equal(t, tt.want.statusCode, resp.StatusCode, "Wrong status code")
+			assert.Equal(t, tt.want.body, string(respBody), "Wrong status code")
+		})
+	}
+}
+
+func newTestDB(notEmpty bool) *storage.DB {
+	db := storage.NewStorage(true)
+	if notEmpty {
+		db.Save("e9db20b2", "https://yandex.ru")
+		return db
+	}
+	return db
+}
+
+func newGetTestServer(db *storage.DB) *httptest.Server {
+	r := chi.NewRouter()
+
+	r.Get("/{shortUrl}", Get(db))
+
+	return httptest.NewServer(r)
+}

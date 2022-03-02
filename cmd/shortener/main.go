@@ -1,20 +1,28 @@
 package main
 
+import "C"
 import (
+	"fmt"
+	"github.com/zavyalov-den/url-shortener/internal/config"
 	"github.com/zavyalov-den/url-shortener/internal/handler"
-	"github.com/zavyalov-den/url-shortener/internal/repo"
+	"github.com/zavyalov-den/url-shortener/internal/storage"
 	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 )
 
+var cfg = config.Conf
+
 func main() {
-	urls := repo.NewRepo()
+	st := storage.NewStorage(false)
 
 	r := chi.NewRouter()
-	r.Get("/{shortUrl}", handler.Get(urls))
-	r.Post("/", handler.Post(urls))
 
-	log.Fatal(http.ListenAndServe(":8080", r))
+	r.Post("/api/shorten", handler.ShortenPost(st))
+	r.Get("/{shortUrl}", handler.Get(st))
+	r.Post("/", handler.Post(st))
+
+	fmt.Println(cfg)
+	log.Fatal(http.ListenAndServe(cfg.ServerAddress, r))
 }

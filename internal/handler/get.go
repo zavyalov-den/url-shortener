@@ -2,15 +2,16 @@ package handler
 
 import (
 	"github.com/go-chi/chi/v5"
+	"github.com/zavyalov-den/url-shortener/internal/storage"
 	"net/http"
 )
 
-func Get(urls map[string]string) http.HandlerFunc {
+func Get(db *storage.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		shortURL := chi.URLParam(r, "shortUrl")
 
-		longURL, ok := urls[shortURL]
-		if !ok {
+		longURL, err := db.Get(shortURL)
+		if err != nil {
 			http.NotFound(w, r)
 			return
 		}

@@ -4,68 +4,57 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/zavyalov-den/url-shortener/internal/config"
+	"github.com/zavyalov-den/url-shortener/internal/storage"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
-type want struct {
-	statusCode int
-	body       string
-}
-
-func Test_GetHandler(t *testing.T) {
+func Test_PostHandler(t *testing.T) {
 	tests := []struct {
 		name   string
-		urls   map[string]string
+		db     *storage.DB
 		body   string
 		params string
 		want   want
 	}{
 		{
-			"expand",
-			getURLs(true),
+			"shorten",
+			newTestDB(false),
+			"https://yandex.ru",
 			"",
-			"/e9db20b2",
 			want{
-				statusCode: 307,
-				body:       "",
+				statusCode: 201,
+				body:       config.Conf.BaseURL + "/e9db20b2",
 			},
 		},
 		{
-			"returns 404 on url that doesn't exist",
-			getURLs(false),
+			"shorten negative",
+			newTestDB(false),
 			"",
-			"/asdfa",
-			want{
-				statusCode: 404,
-				body:       "404 page not found\n",
-			},
-		},
-		{
-			"returns 404 on invalid request URL",
-			getURLs(false),
 			"",
-			"/wrong/url",
 			want{
-				statusCode: 404,
-				body:       "404 page not found\n",
-				//body:       "invalid request URL\n",
+				statusCode: 400,
+				body:       "request body must not be empty\n",
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ts := newGetTestServer(tt.urls)
+			ts := newPostTestServer(tt.db)
 
 			cl := ts.Client()
 			cl.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 				return http.ErrUseLastResponse
 			}
 
-			resp, err := cl.Get(ts.URL + tt.params)
+			var resp *http.Response
+
+			resp, err := cl.Post(ts.URL+tt.params, "text/plain; charset=utf8", strings.NewReader(tt.body))
 			require.NoError(t, err)
 
 			defer resp.Body.Close()
@@ -81,19 +70,10 @@ func Test_GetHandler(t *testing.T) {
 	}
 }
 
-func getURLs(notEmpty bool) map[string]string {
-	if notEmpty {
-		return map[string]string{
-			"e9db20b2": "https://yandex.ru",
-		}
-	}
-	return make(map[string]string)
-}
-
-func newGetTestServer(urls map[string]string) *httptest.Server {
+func newPostTestServer(db *storage.DB) *httptest.Server {
 	r := chi.NewRouter()
 
-	r.Get("/{shortUrl}", Get(urls))
+	r.Post("/", Post(db))
 
 	return httptest.NewServer(r)
 }
