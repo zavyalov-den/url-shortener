@@ -1,7 +1,8 @@
 package main
 
+import "C"
 import (
-	"flag"
+	"fmt"
 	"github.com/zavyalov-den/url-shortener/internal/config"
 	"github.com/zavyalov-den/url-shortener/internal/handler"
 	"github.com/zavyalov-den/url-shortener/internal/storage"
@@ -11,18 +12,10 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-//флаг -a, отвечающий за адрес запуска HTTP-сервера (переменная SERVER_ADDRESS);
-//флаг -b, отвечающий за базовый адрес результирующего сокращённого URL (переменная BASE_URL);
-//флаг -f, отвечающий за путь до файла с сокращёнными URL (переменная FILE_STORAGE_PATH).
-
-func init() {
-
-}
+var cfg = config.C
 
 func main() {
-	st := storage.NewStorage(true)
-
-	flag.Parse()
+	st := storage.NewStorage(false)
 
 	r := chi.NewRouter()
 
@@ -30,5 +23,6 @@ func main() {
 	r.Get("/{shortUrl}", handler.Get(st))
 	r.Post("/", handler.Post(st))
 
-	log.Fatal(http.ListenAndServe(config.C.ServerAddress, r))
+	fmt.Println(cfg)
+	log.Fatal(http.ListenAndServe(cfg.ServerAddress, r))
 }
