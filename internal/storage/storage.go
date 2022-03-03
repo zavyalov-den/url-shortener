@@ -28,13 +28,13 @@ func (db *DB) Get(key string) (string, error) {
 func (db *DB) saveToFile() {
 	var file *os.File
 
-	defer file.Close()
-
 	flag := os.O_CREATE | os.O_WRONLY | os.O_TRUNC
 	file, err := os.OpenFile(config.C.FileStoragePath, flag, 0755)
 	if err != nil {
 		panic("failed to open storage file")
 	}
+
+	defer file.Close()
 
 	data, err := json.Marshal(db.db)
 	if err != nil {

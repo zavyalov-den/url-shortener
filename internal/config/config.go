@@ -2,6 +2,7 @@ package config
 
 import (
 	"flag"
+	"fmt"
 	"github.com/caarlos0/env/v6"
 )
 
@@ -16,24 +17,14 @@ type config struct {
 func parseConfig() *config {
 	cfg := &config{}
 	if err := env.Parse(cfg); err != nil {
-		panic("failed to parse config")
+		fmt.Println("failed to parse config")
 	}
 
-	serverAddress := flag.String("a", "", "server address")
-	baseURL := flag.String("b", "", "base url")
-	fileStoragePath := flag.String("f", "", "file storage path")
+	flag.StringVar(&cfg.ServerAddress, "a", cfg.ServerAddress, "server address")
+	flag.StringVar(&cfg.BaseURL, "b", cfg.BaseURL, "base url")
+	flag.StringVar(&cfg.FileStoragePath, "f", cfg.FileStoragePath, "file storage path")
 
 	flag.Parse()
-
-	if serverAddress != nil && *serverAddress != "" {
-		cfg.ServerAddress = *serverAddress
-	}
-	if baseURL != nil && *baseURL != "" {
-		cfg.BaseURL = *baseURL
-	}
-	if fileStoragePath != nil && *fileStoragePath != "" {
-		cfg.FileStoragePath = *fileStoragePath
-	}
 
 	return cfg
 }
