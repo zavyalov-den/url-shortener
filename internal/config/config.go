@@ -17,7 +17,7 @@ type config struct {
 func parseConfig() *config {
 	cfg := &config{}
 	if err := env.Parse(cfg); err != nil {
-		fmt.Println("failed to parse config")
+		fmt.Println("failed to parse config", err)
 	}
 
 	flag.StringVar(&cfg.ServerAddress, "a", cfg.ServerAddress, "server address")
