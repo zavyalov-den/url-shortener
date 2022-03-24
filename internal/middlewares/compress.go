@@ -29,7 +29,7 @@ func GzipHandle(next http.Handler) http.Handler {
 			"text/xml",
 		}
 
-		if !strings.Contains(strings.ToLower(w.Header().Get("Accept-Encoding")), "gzip") {
+		if !strings.Contains(strings.ToLower(r.Header.Get("Accept-Encoding")), "gzip") {
 			next.ServeHTTP(w, r)
 			return
 		}
