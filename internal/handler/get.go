@@ -13,6 +13,7 @@ func Get(db *storage.DB) http.HandlerFunc {
 
 		longURL, err := db.Get(shortURL)
 		if err != nil {
+			fmt.Printf("long: %s, short: %s\n", longURL, shortURL)
 			http.NotFound(w, r)
 			return
 		}
