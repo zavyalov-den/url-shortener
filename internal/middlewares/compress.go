@@ -12,6 +12,7 @@ import (
 var allowedTypes = []string{
 	"application/javascript",
 	"application/json",
+	"application/gzip",
 	"text/css",
 	"text/html",
 	"text/plain",
@@ -62,7 +63,7 @@ func GzipHandle(next http.Handler) http.Handler {
 
 		w.Header().Set("Content-Encoding", "gzip")
 
-		next.ServeHTTP(&gzipWriter{
+		next.ServeHTTP(gzipWriter{
 			ResponseWriter: w,
 			Writer:         gz,
 		}, r)
