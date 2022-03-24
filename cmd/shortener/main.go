@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/zavyalov-den/url-shortener/internal/config"
 	"github.com/zavyalov-den/url-shortener/internal/handler"
+	"github.com/zavyalov-den/url-shortener/internal/middlewares"
 	"github.com/zavyalov-den/url-shortener/internal/storage"
 	"log"
 	"net/http"
@@ -24,5 +25,5 @@ func main() {
 	r.Post("/", handler.Post(st))
 
 	fmt.Println(cfg)
-	log.Fatal(http.ListenAndServe(cfg.ServerAddress, r))
+	log.Fatal(http.ListenAndServe(cfg.ServerAddress, middlewares.GzipHandle(r)))
 }
