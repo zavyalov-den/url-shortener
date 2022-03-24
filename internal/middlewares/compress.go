@@ -60,12 +60,10 @@ func GzipHandle(next http.Handler) http.Handler {
 		//	next.ServeHTTP(w, r)
 		//	return
 		//}
+		//
 
 		w.Header().Set("Content-Encoding", "gzip")
 
-		next.ServeHTTP(gzipWriter{
-			ResponseWriter: w,
-			Writer:         gz,
-		}, r)
+		next.ServeHTTP(gzipWriter{ResponseWriter: w, Writer: gz}, r)
 	})
 }
