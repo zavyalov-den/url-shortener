@@ -29,7 +29,6 @@ func GzipHandle(next http.Handler) http.Handler {
 			"text/xml",
 		}
 
-		//!slices.Contains(allowedTypes, w.Header().Get("Content-Type")) {
 		if !strings.Contains(strings.ToLower(w.Header().Get("Accept-Encoding")), "gzip") {
 			next.ServeHTTP(w, r)
 			return
@@ -42,11 +41,12 @@ func GzipHandle(next http.Handler) http.Handler {
 		}
 		defer gz.Close()
 
-		contentType := r.Header.Get("Content-Type")
+		contentType := strings.ToLower(r.Header.Get("Content-Type"))
 
 		var allowedCT bool
 
-		// would love to replace it with golang.org/x/exp/slices.Contains() but tests run on 1.17 :(
+		// would love to replace it with golang.org/x/exp/slices.Contains()
+		// but tests run on 1.17 :(
 		for _, ct := range allowedTypes {
 			if ct == contentType {
 				allowedCT = true
