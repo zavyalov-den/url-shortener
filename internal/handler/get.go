@@ -9,7 +9,8 @@ import (
 
 func Get(db *storage.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("get handler")
+		fmt.Println("get handler. w: ")
+		fmt.Println(w)
 		shortURL := chi.URLParam(r, "shortUrl")
 
 		longURL, err := db.Get(shortURL)
@@ -20,8 +21,6 @@ func Get(db *storage.DB) http.HandlerFunc {
 		}
 
 		w.Header().Set("Location", longURL)
-
-		fmt.Println(w.Header().Get("Location"))
 
 		w.WriteHeader(http.StatusTemporaryRedirect)
 	}
