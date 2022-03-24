@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/zavyalov-den/url-shortener/internal/storage"
 	"net/http"
@@ -17,6 +18,8 @@ func Get(db *storage.DB) http.HandlerFunc {
 		}
 
 		w.Header().Set("Location", longURL)
+
+		fmt.Println(w.Header().Get("Location"))
 
 		w.WriteHeader(http.StatusTemporaryRedirect)
 	}
