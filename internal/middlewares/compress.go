@@ -42,7 +42,7 @@ func GzipHandle(next http.Handler) http.Handler {
 		}
 		defer gz.Close()
 
-		contentType := w.Header().Get("Content-Type")
+		contentType := r.Header.Get("Content-Type")
 
 		var allowedCT bool
 
