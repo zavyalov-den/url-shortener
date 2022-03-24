@@ -9,6 +9,7 @@ import (
 
 func Get(db *storage.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("get handler")
 		shortURL := chi.URLParam(r, "shortUrl")
 
 		longURL, err := db.Get(shortURL)
