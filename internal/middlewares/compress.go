@@ -2,7 +2,7 @@ package middlewares
 
 import (
 	"compress/gzip"
-	"golang.org/x/exp/slices"
+	//"golang.org/x/exp/slices"
 
 	"io"
 	"net/http"
@@ -29,8 +29,8 @@ func GzipHandle(next http.Handler) http.Handler {
 			"text/xml",
 		}
 
-		if !strings.Contains(strings.ToLower(w.Header().Get("Accept-Encoding")), "gzip") ||
-			!slices.Contains(allowedTypes, w.Header().Get("Content-Type")) {
+		//!slices.Contains(allowedTypes, w.Header().Get("Content-Type")) {
+		if !strings.Contains(strings.ToLower(w.Header().Get("Accept-Encoding")), "gzip") {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -41,6 +41,22 @@ func GzipHandle(next http.Handler) http.Handler {
 			return
 		}
 		defer gz.Close()
+
+		contentType := w.Header().Get("Content-Type")
+
+		var allowedCT bool
+
+		// would love to replace it with golang.org/x/exp/slices.Contains() but tests run on 1.17 :(
+		for _, ct := range allowedTypes {
+			if ct == contentType {
+				allowedCT = true
+			}
+		}
+
+		if !allowedCT {
+			next.ServeHTTP(w, r)
+			return
+		}
 
 		w.Header().Set("Content-Encoding", "gzip")
 
