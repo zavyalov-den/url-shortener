@@ -36,21 +36,24 @@ func GzipHandle(next http.Handler) http.Handler {
 			return
 		}
 
-		// decode body
-		body, err := gzip.NewReader(r.Body)
-		if err != nil {
-			io.WriteString(w, err.Error())
-			return
-		}
-		r.Body = body
+		//// decode body
+		//body, err := gzip.NewReader(r.Body)
+		//if err != nil {
+		//	http.Error(w, err.Error(), http.StatusBadRequest)
+		//	return
+		//}
+		//r.Body = body
 
 		gz, err := gzip.NewWriterLevel(w, gzip.BestSpeed)
 		if err != nil {
-			io.WriteString(w, err.Error())
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 		defer gz.Close()
 
+		w.Header().Set("Content-Encoding", "gzip")
+
+		next.ServeHTTP(gzipWriter{ResponseWriter: w, Writer: gz}, r)
 		//contentType := strings.ToLower(r.Header.Get("Content-Type"))
 		//
 		//var allowedCT bool
@@ -68,9 +71,5 @@ func GzipHandle(next http.Handler) http.Handler {
 		//	return
 		//}
 		//
-
-		w.Header().Set("Content-Encoding", "gzip")
-
-		next.ServeHTTP(gzipWriter{ResponseWriter: w, Writer: gz}, r)
 	})
 }
