@@ -20,10 +20,12 @@ func main() {
 
 	r := chi.NewRouter()
 
+	r.Use(middlewares.GzipHandle)
+
 	r.Post("/api/shorten", handler.ShortenPost(st))
 	r.Get("/{shortUrl}", handler.Get(st))
 	r.Post("/", handler.Post(st))
 
 	fmt.Println(cfg)
-	log.Fatal(http.ListenAndServe(cfg.ServerAddress, middlewares.GzipHandle(r)))
+	log.Fatal(http.ListenAndServe(cfg.ServerAddress, r))
 }
