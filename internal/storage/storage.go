@@ -11,6 +11,13 @@ type DB struct {
 	db map[string]string
 }
 
+type UserURL struct {
+	ShortURL    string
+	OriginalURL string
+}
+
+var sessions = make(map[int][]UserURL)
+
 func (db *DB) Save(key, value string) {
 	db.db[key] = value
 	db.saveToFile()
