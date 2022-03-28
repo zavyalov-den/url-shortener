@@ -31,7 +31,7 @@ func Post(db *storage.DB) http.HandlerFunc {
 		db.Save(short, string(data))
 		db.SaveUserUrl(userID, storage.UserURL{
 			ShortURL:    short,
-			OriginalURL: string(data),
+			OriginalURL: config.C.BaseURL + "/" + string(data),
 		})
 
 		w.WriteHeader(http.StatusCreated)

@@ -58,7 +58,7 @@ func ShortenPost(db *storage.DB) http.HandlerFunc {
 
 		db.Save(short, req.URL)
 		db.SaveUserUrl(userID, storage.UserURL{
-			ShortURL:    short,
+			ShortURL:    res.Result,
 			OriginalURL: req.URL,
 		})
 
