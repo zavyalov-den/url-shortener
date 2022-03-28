@@ -1,12 +1,12 @@
 package middlewares
 
 import (
-	"bytes"
 	"context"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
 	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"github.com/zavyalov-den/url-shortener/internal/config"
@@ -14,39 +14,24 @@ import (
 	"strconv"
 )
 
-var (
-	currentUserId = 0
-	nonce         []byte
-)
-
-func Auth(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// check for cookie, if exists set UserID as context?
-		// if cookie is absent - generate a new one.
-
-		cookie, err := r.Cookie("auth")
-		if errors.Is(err, http.ErrNoCookie) {
-			cookie = createAuthCookie()
-		} else if err != nil {
-			cookie = createAuthCookie()
-			//next.ServeHTTP(w, r)
-			//return
-		}
-
-		userID := decodeAuthCookie(cookie)
-		if userID == 0 {
-			cookie = createAuthCookie()
-			//next.ServeHTTP(w, r)
-			//return
-		}
-		ctx := context.WithValue(nil, "userID", userID)
-
-		next.ServeHTTP(w, r.WithContext(ctx))
-		return
-	})
+type CryptoSvc struct {
+	aesBlock   cipher.Block
+	aesGCM     cipher.AEAD
+	nonce      []byte
+	lastUserId int
 }
 
-func decodeAuthCookie(cookie *http.Cookie) int {
+var (
+	cryptoSvc *CryptoSvc
+	instanceN int
+)
+
+func GetCryptoSvcInstance() *CryptoSvc {
+	if cryptoSvc != nil {
+		return cryptoSvc
+	}
+	fmt.Printf("creating CryptoSvc instance #%d\n", instanceN)
+
 	key := sha256.Sum256([]byte(config.C.AuthKey))
 
 	aesBlock, err := aes.NewCipher(key[:])
@@ -59,8 +44,54 @@ func decodeAuthCookie(cookie *http.Cookie) int {
 		fmt.Println("new gcm", err)
 	}
 
-	nonce := getNonce(aesGCM.NonceSize())
-	src, err := aesGCM.Open(nil, nonce, []byte(cookie.Value), nil)
+	nonce := make([]byte, aesGCM.NonceSize())
+	_, err = rand.Read(nonce)
+	if err != nil {
+		fmt.Println("read err: ", err.Error())
+		fmt.Println(err.Error())
+	}
+
+	cryptoSvc = &CryptoSvc{
+		aesBlock:   aesBlock,
+		aesGCM:     aesGCM,
+		nonce:      nonce,
+		lastUserId: 0,
+	}
+	return cryptoSvc
+}
+
+func Auth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		c := GetCryptoSvcInstance()
+
+		cookie, err := r.Cookie("auth")
+		if errors.Is(err, http.ErrNoCookie) {
+			cookie = c.createAuthCookie()
+		} else if err != nil {
+			cookie = c.createAuthCookie()
+		}
+
+		userID := c.decodeAuthCookie(cookie)
+		if userID == 0 {
+			cookie = c.createAuthCookie()
+			userID = c.decodeAuthCookie(cookie)
+		}
+		fmt.Println("userID", userID)
+		ctx := context.WithValue(r.Context(), "auth", userID)
+
+		http.SetCookie(w, cookie)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+		return
+	})
+}
+
+func (c *CryptoSvc) decodeAuthCookie(cookie *http.Cookie) int {
+	cookieByte, err := hex.DecodeString(cookie.Value)
+	if err != nil {
+		fmt.Println("failed to decode a cookie :(", err)
+	}
+	src, err := c.aesGCM.Open(nil, c.nonce, cookieByte, nil)
 	if err != nil {
 		fmt.Println("open", err)
 	}
@@ -73,41 +104,31 @@ func decodeAuthCookie(cookie *http.Cookie) int {
 	return userID
 }
 
-func createAuthCookie() *http.Cookie {
-	currentUserId++
+func (c *CryptoSvc) createAuthCookie() *http.Cookie {
+	c.lastUserId++
 
-	key := sha256.Sum256([]byte(config.C.AuthKey))
+	//key := sha256.Sum256([]byte(config.C.AuthKey))
+	//
+	//aesBlock, err := aes.NewCipher(key[:])
+	//if err != nil {
+	//	fmt.Println("new cipher", err)
+	//}
+	//
+	//aesGCM, err := cipher.NewGCM(aesBlock)
+	//if err != nil {
+	//	fmt.Println("new gcm", err)
+	//}
 
-	aesBlock, err := aes.NewCipher(key[:])
-	if err != nil {
-		fmt.Println("new cipher", err)
-	}
+	//nonce := getNonce(aesGCM.NonceSize())
 
-	aesGCM, err := cipher.NewGCM(aesBlock)
-	if err != nil {
-		fmt.Println("new gcm", err)
-	}
+	byteString := hex.EncodeToString([]byte(strconv.Itoa(c.lastUserId)))
 
-	nonce := getNonce(aesGCM.NonceSize())
+	fmt.Println(byteString)
 
-	sealedCookie := aesGCM.Seal(nil, nonce, []byte(strconv.Itoa(currentUserId)), nil)
+	sealedCookie := c.aesGCM.Seal(nil, c.nonce, []byte(byteString), nil)
 
 	return &http.Cookie{
 		Name:  "auth",
-		Value: string(sealedCookie),
+		Value: hex.EncodeToString(sealedCookie),
 	}
-}
-
-func getNonce(n int) []byte {
-	var b []byte
-	if !bytes.Equal(nonce, b) {
-		return nonce
-	}
-
-	nonce = make([]byte, n)
-	_, err := rand.Read(nonce)
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	return nonce
 }

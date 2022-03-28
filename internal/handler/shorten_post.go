@@ -53,7 +53,15 @@ func ShortenPost(db *storage.DB) http.HandlerFunc {
 			return
 		}
 
+		ctx := r.Context()
+		//fmt.Println(ctx)
+		userID := ctx.Value("auth").(int)
+
 		db.Save(short, req.URL)
+		db.SaveUserUrl(userID, storage.UserURL{
+			ShortURL:    short,
+			OriginalURL: req.URL,
+		})
 
 		w.WriteHeader(http.StatusCreated)
 		_, err = w.Write(resBody)
