@@ -30,7 +30,7 @@ func GetCryptoSvcInstance() *CryptoSvc {
 		return cryptoSvc
 	}
 
-	key := sha256.Sum256([]byte(config.C.AuthKey))
+	key := sha256.Sum256([]byte(config.Config.AuthKey))
 
 	aesBlock, err := aes.NewCipher(key[:])
 	if err != nil {

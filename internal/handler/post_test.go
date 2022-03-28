@@ -28,7 +28,7 @@ func Test_PostHandler(t *testing.T) {
 			"",
 			want{
 				statusCode: 201,
-				body:       config.C.BaseURL + "/e9db20b2",
+				body:       config.Config.BaseURL + "/e9db20b2",
 			},
 		},
 		{

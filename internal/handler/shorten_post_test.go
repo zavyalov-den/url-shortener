@@ -27,7 +27,7 @@ func Test_shortenPost(t *testing.T) {
 			`{"url": "https://yandex.ru"}`,
 			want{
 				statusCode: 201,
-				body:       fmt.Sprintf(`{"result":"%s/e9db20b2"}`, config.C.BaseURL),
+				body:       fmt.Sprintf(`{"result":"%s/e9db20b2"}`, config.Config.BaseURL),
 			},
 		},
 		{

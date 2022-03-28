@@ -12,7 +12,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-var cfg = config.C
+var cfg = config.Config
 
 func main() {
 	st := storage.NewStorage(true)

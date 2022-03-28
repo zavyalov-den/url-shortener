@@ -35,7 +35,7 @@ func (db *DB) saveToFile() {
 	var file *os.File
 
 	flag := os.O_CREATE | os.O_WRONLY | os.O_TRUNC
-	file, err := os.OpenFile(config.C.FileStoragePath, flag, 0755)
+	file, err := os.OpenFile(config.Config.FileStoragePath, flag, 0755)
 	if err != nil {
 		panic("failed to open storage file")
 	}
@@ -56,9 +56,9 @@ func (db *DB) saveToFile() {
 func (db *DB) readFromFile() {
 	storage := make(map[string]string)
 
-	data, err := os.ReadFile(config.C.FileStoragePath)
+	data, err := os.ReadFile(config.Config.FileStoragePath)
 	if err != nil {
-		if _, createErr := os.Create(config.C.FileStoragePath); createErr != nil {
+		if _, createErr := os.Create(config.Config.FileStoragePath); createErr != nil {
 			panic("can't read or create storage file.")
 		}
 	}

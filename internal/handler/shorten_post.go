@@ -45,7 +45,7 @@ func ShortenPost(db *storage.DB) http.HandlerFunc {
 		}
 
 		short := service.Shorten([]byte(req.URL))
-		res.Result = config.C.BaseURL + "/" + short
+		res.Result = config.Config.BaseURL + "/" + short
 
 		resBody, err := json.Marshal(res)
 		if err != nil {
