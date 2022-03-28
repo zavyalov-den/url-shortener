@@ -9,6 +9,8 @@ import (
 
 func GetUserUrls(db *storage.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
 		ctx := r.Context()
 
 		userID := ctx.Value("auth").(int)

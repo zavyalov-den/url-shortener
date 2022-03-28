@@ -13,6 +13,7 @@ type config struct {
 	BaseURL         string `env:"BASE_URL" envDefault:"http://localhost:8080"`
 	FileStoragePath string `env:"FILE_STORAGE_PATH" envDefault:"./storage.json"`
 	AuthKey         string `env:"AUTH_KEY" envDefault:"some key"`
+	DatabaseDSN     string `env:"DATABASE_DSN" envDefault:"some://address.com:3050"`
 }
 
 func parseConfig() *config {
@@ -25,6 +26,7 @@ func parseConfig() *config {
 	flag.StringVar(&cfg.ServerAddress, "a", cfg.ServerAddress, "server address")
 	flag.StringVar(&cfg.BaseURL, "b", cfg.BaseURL, "base url")
 	flag.StringVar(&cfg.FileStoragePath, "f", cfg.FileStoragePath, "file storage path")
+	flag.StringVar(&cfg.DatabaseDSN, "d", cfg.DatabaseDSN, "database data source name")
 
 	flag.Parse()
 

@@ -25,7 +25,14 @@ func Post(db *storage.DB) http.HandlerFunc {
 
 		short := service.Shorten(data)
 
+		ctx := r.Context()
+		userID := ctx.Value("auth").(int)
+
 		db.Save(short, string(data))
+		db.SaveUserUrl(userID, storage.UserURL{
+			ShortURL:    short,
+			OriginalURL: string(data),
+		})
 
 		w.WriteHeader(http.StatusCreated)
 		_, err = w.Write([]byte(config.C.BaseURL + "/" + short))
