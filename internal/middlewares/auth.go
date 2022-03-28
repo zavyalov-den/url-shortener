@@ -23,14 +23,12 @@ type CryptoSvc struct {
 
 var (
 	cryptoSvc *CryptoSvc
-	instanceN int
 )
 
 func GetCryptoSvcInstance() *CryptoSvc {
 	if cryptoSvc != nil {
 		return cryptoSvc
 	}
-	fmt.Printf("creating CryptoSvc instance #%d\n", instanceN)
 
 	key := sha256.Sum256([]byte(config.C.AuthKey))
 
@@ -76,7 +74,6 @@ func Auth(next http.Handler) http.Handler {
 			cookie = c.createAuthCookie()
 			userID = c.decodeAuthCookie(cookie)
 		}
-		fmt.Println("userID", userID)
 		ctx := context.WithValue(r.Context(), "auth", userID)
 
 		http.SetCookie(w, cookie)
@@ -96,7 +93,6 @@ func (c *CryptoSvc) decodeAuthCookie(cookie *http.Cookie) int {
 		fmt.Println("open", err)
 	}
 
-	fmt.Println(string(src))
 	userID, err := strconv.Atoi(string(src))
 	if err != nil {
 		return 0
@@ -107,23 +103,7 @@ func (c *CryptoSvc) decodeAuthCookie(cookie *http.Cookie) int {
 func (c *CryptoSvc) createAuthCookie() *http.Cookie {
 	c.lastUserId++
 
-	//key := sha256.Sum256([]byte(config.C.AuthKey))
-	//
-	//aesBlock, err := aes.NewCipher(key[:])
-	//if err != nil {
-	//	fmt.Println("new cipher", err)
-	//}
-	//
-	//aesGCM, err := cipher.NewGCM(aesBlock)
-	//if err != nil {
-	//	fmt.Println("new gcm", err)
-	//}
-
-	//nonce := getNonce(aesGCM.NonceSize())
-
 	byteString := hex.EncodeToString([]byte(strconv.Itoa(c.lastUserId)))
-
-	fmt.Println(byteString)
 
 	sealedCookie := c.aesGCM.Seal(nil, c.nonce, []byte(byteString), nil)
 
