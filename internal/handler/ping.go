@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"github.com/jackc/pgx/v4"
 	"github.com/zavyalov-den/url-shortener/internal/config"
 	"github.com/zavyalov-den/url-shortener/internal/storage"
@@ -19,7 +18,7 @@ func Ping(db *storage.DB) http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		fmt.Println(conn)
+		defer conn.Close(ctx)
 
 		err = conn.Ping(ctx)
 		if err != nil {
