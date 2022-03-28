@@ -28,14 +28,16 @@ func Auth(next http.Handler) http.Handler {
 		if errors.Is(err, http.ErrNoCookie) {
 			cookie = createAuthCookie()
 		} else if err != nil {
-			next.ServeHTTP(w, r)
-			return
+			cookie = createAuthCookie()
+			//next.ServeHTTP(w, r)
+			//return
 		}
 
 		userID := decodeAuthCookie(cookie)
 		if userID == 0 {
-			next.ServeHTTP(w, r)
-			return
+			cookie = createAuthCookie()
+			//next.ServeHTTP(w, r)
+			//return
 		}
 		ctx := context.WithValue(nil, "userID", userID)
 
@@ -73,6 +75,7 @@ func decodeAuthCookie(cookie *http.Cookie) int {
 
 func createAuthCookie() *http.Cookie {
 	currentUserId++
+
 	key := sha256.Sum256([]byte(config.C.AuthKey))
 
 	aesBlock, err := aes.NewCipher(key[:])
@@ -84,9 +87,6 @@ func createAuthCookie() *http.Cookie {
 	if err != nil {
 		fmt.Println("new gcm", err)
 	}
-
-	nsize := aesGCM.NonceSize()
-	fmt.Println("nsize", nsize)
 
 	nonce := getNonce(aesGCM.NonceSize())
 

@@ -1,23 +1,21 @@
 package middlewares
 
 import (
-	//"golang.org/x/exp/slices"
-
 	"compress/gzip"
 	"io"
 	"net/http"
 	"strings"
 )
 
-var allowedTypes = []string{
-	"application/javascript",
-	"application/json",
-	"application/gzip",
-	"text/css",
-	"text/html",
-	"text/plain",
-	"text/xml",
-}
+//var allowedTypes = []string{
+//	"application/javascript",
+//	"application/json",
+//	"application/gzip",
+//	"text/css",
+//	"text/html",
+//	"text/plain",
+//	"text/xml",
+//}
 
 type gzipWriter struct {
 	http.ResponseWriter
@@ -28,7 +26,7 @@ func (w gzipWriter) Write(b []byte) (int, error) {
 	return w.Writer.Write(b)
 }
 
-// GzipHandle compresses data with gzip
+// GzipHandle compress/decompress data with gzip
 func GzipHandle(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
@@ -43,15 +41,15 @@ func GzipHandle(next http.Handler) http.Handler {
 			return
 		}
 
-		gzw, err := gzip.NewWriterLevel(w, gzip.DefaultCompression)
+		gz, err := gzip.NewWriterLevel(w, gzip.DefaultCompression)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		defer gzw.Close()
+		defer gz.Close()
 
 		w.Header().Set("Content-Encoding", "gzip")
 
-		next.ServeHTTP(gzipWriter{ResponseWriter: w, Writer: gzw}, r)
+		next.ServeHTTP(gzipWriter{ResponseWriter: w, Writer: gz}, r)
 	})
 }
