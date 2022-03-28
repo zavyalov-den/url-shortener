@@ -13,7 +13,7 @@ type config struct {
 	BaseURL         string `env:"BASE_URL" envDefault:"http://localhost:8080"`
 	FileStoragePath string `env:"FILE_STORAGE_PATH" envDefault:"./storage.json"`
 	AuthKey         string `env:"AUTH_KEY" envDefault:"some key"`
-	DatabaseDSN     string `env:"DATABASE_DSN" envDefault:"some://address.com:3050"`
+	DatabaseDSN     string `env:"DATABASE_DSN" envDefault:"postgres://root:123@localhost:5432/postgres"`
 }
 
 func parseConfig() *config {

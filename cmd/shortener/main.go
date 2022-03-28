@@ -26,6 +26,7 @@ func main() {
 	r.Get("/api/user/urls", handler.GetUserUrls(st))
 	r.Get("/{shortUrl}", handler.Get(st))
 	r.Post("/", handler.Post(st))
+	r.Get("/ping", handler.Ping(st))
 
 	log.Fatal(http.ListenAndServe(cfg.ServerAddress, r))
 }
