@@ -88,12 +88,13 @@ func (db *DB) SaveUserUrl(userID int, url UserURL) {
 	db.userURLs[userID] = urls
 }
 
-func NewStorage(fileStorage bool) *DB {
+func NewStorage() *DB {
 	storage := &DB{
 		db:       make(map[string]string),
 		userURLs: make(map[int][]UserURL),
 	}
-	if fileStorage {
+	//if fileStorage {
+	if config.Config.FileStoragePath != "" {
 		storage.readFromFile()
 	}
 

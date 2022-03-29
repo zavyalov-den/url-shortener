@@ -15,7 +15,7 @@ import (
 var cfg = config.Config
 
 func main() {
-	st := storage.NewStorage(true)
+	st := storage.NewStorage()
 
 	r := chi.NewRouter()
 

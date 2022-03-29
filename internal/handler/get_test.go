@@ -83,7 +83,7 @@ func Test_GetHandler(t *testing.T) {
 }
 
 func newTestDB(notEmpty bool) *storage.DB {
-	db := storage.NewStorage(false)
+	db := storage.NewStorage()
 	if notEmpty {
 		db.Save("e9db20b2", "https://yandex.ru")
 		return db
