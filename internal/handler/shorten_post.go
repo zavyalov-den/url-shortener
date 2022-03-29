@@ -59,11 +59,14 @@ func ShortenPost(db storage.Storage) http.HandlerFunc {
 
 		fmt.Println("current user ID: ", userID)
 
-		db.SaveURL(short, req.URL)
-		db.SaveUserURL(userID, storage.UserURL{
+		err = db.SaveURL(userID, storage.UserURL{
 			ShortURL:    res.Result,
 			OriginalURL: req.URL,
 		})
+		if err != nil {
+			http.Error(w, "failed to save url to database: "+err.Error(), 400)
+			return
+		}
 
 		_, err = w.Write(resBody)
 		if err != nil {

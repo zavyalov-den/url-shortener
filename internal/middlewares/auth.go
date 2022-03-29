@@ -23,12 +23,16 @@ type CryptoSvc struct {
 
 var (
 	cryptoSvc *CryptoSvc
+	n         int
 )
 
 func GetCryptoSvcInstance() *CryptoSvc {
 	if cryptoSvc != nil {
 		return cryptoSvc
 	}
+
+	n++
+	fmt.Println("creating crypto instance #", n)
 
 	key := sha256.Sum256([]byte(config.Config.AuthKey))
 
@@ -110,6 +114,5 @@ func (c *CryptoSvc) createAuthCookie() *http.Cookie {
 	return &http.Cookie{
 		Name:  "auth",
 		Value: hex.EncodeToString(sealedCookie),
-		Path:  "/",
 	}
 }

@@ -8,31 +8,24 @@ import (
 )
 
 type Storage interface {
-	SaveURL(k, v string) error
 	GetURL(k string) (string, error)
 	GetUserURLs(id int) []UserURL
-	SaveUserURL(id int, url UserURL) error
+	SaveURL(id int, url UserURL) error
 }
 
-type InMemoryStorage struct {
+type BasicStorage struct {
 	db       map[string]string
 	userURLs map[int][]UserURL
 }
 
-var _ Storage = (*InMemoryStorage)(nil)
+var _ Storage = (*BasicStorage)(nil)
 
 type UserURL struct {
 	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
 }
 
-func (db *InMemoryStorage) SaveURL(key, value string) error {
-	db.db[key] = value
-	db.saveToFile()
-	return nil
-}
-
-func (db *InMemoryStorage) GetURL(key string) (string, error) {
+func (db *BasicStorage) GetURL(key string) (string, error) {
 	longURL, ok := db.db[key]
 	if !ok {
 		return "", fmt.Errorf("failed to get an URL")
@@ -41,7 +34,7 @@ func (db *InMemoryStorage) GetURL(key string) (string, error) {
 	return longURL, nil
 }
 
-func (db *InMemoryStorage) saveToFile() {
+func (db *BasicStorage) saveToFile() {
 	var file *os.File
 
 	flag := os.O_CREATE | os.O_WRONLY | os.O_TRUNC
@@ -63,7 +56,7 @@ func (db *InMemoryStorage) saveToFile() {
 	}
 }
 
-func (db *InMemoryStorage) readFromFile() {
+func (db *BasicStorage) readFromFile() {
 	storage := make(map[string]string)
 
 	data, err := os.ReadFile(config.Config.FileStoragePath)
@@ -81,11 +74,15 @@ func (db *InMemoryStorage) readFromFile() {
 	db.db = storage
 }
 
-func (db *InMemoryStorage) GetUserURLs(id int) []UserURL {
+func (db *BasicStorage) GetUserURLs(id int) []UserURL {
+	fmt.Println(id, db.userURLs)
 	return db.userURLs[id]
 }
 
-func (db *InMemoryStorage) SaveUserURL(userID int, url UserURL) error {
+func (db *BasicStorage) SaveURL(userID int, url UserURL) error {
+	db.db[url.ShortURL] = url.OriginalURL
+	db.saveToFile()
+
 	urls := db.userURLs[userID]
 
 	for _, v := range urls {
@@ -100,13 +97,14 @@ func (db *InMemoryStorage) SaveUserURL(userID int, url UserURL) error {
 }
 
 func NewStorage() Storage {
-	if config.Config.DatabaseDSN != "" {
+	//if config.Config.DatabaseDSN != "" {
+	if false {
 		db := NewDB()
 		db.InitDB()
 		return db
 
 	} else {
-		storage := &InMemoryStorage{
+		storage := &BasicStorage{
 			db:       make(map[string]string),
 			userURLs: make(map[int][]UserURL),
 		}

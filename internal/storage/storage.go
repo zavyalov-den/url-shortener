@@ -11,19 +11,19 @@ type DB struct {
 	db *pgxpool.Pool
 }
 
-func (d *DB) SaveURL(k, v string) error {
-	//language=sql
-	query := `
-		insert into urls (short_url, full_url) VALUES ($1, $2)
-		on conflict DO NOTHING;
-	`
-	_, err := d.db.Query(context.Background(), query, k, v)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
+//func (d *DB) SaveURL(k, v string) error {
+//	//language=sql
+//	query := `
+//		insert into urls (short_url, full_url) VALUES ($1, $2)
+//		on conflict DO NOTHING;
+//	`
+//	_, err := d.db.Query(context.Background(), query, k, v)
+//	if err != nil {
+//		return err
+//	}
+//
+//	return nil
+//}
 
 func (d *DB) GetURL(short string) (string, error) {
 	var fullURL string
@@ -69,7 +69,7 @@ func (d *DB) GetUserURLs(id int) []UserURL {
 	return result
 }
 
-func (d *DB) SaveUserURL(userID int, url UserURL) error {
+func (d *DB) SaveURL(userID int, url UserURL) error {
 	var urlID int
 	//language=sql
 	query := `

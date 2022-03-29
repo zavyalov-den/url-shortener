@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"github.com/zavyalov-den/url-shortener/internal/config"
 	"github.com/zavyalov-den/url-shortener/internal/service"
 	"github.com/zavyalov-den/url-shortener/internal/storage"
 	"io"
@@ -28,14 +27,17 @@ func Post(db storage.Storage) http.HandlerFunc {
 		ctx := r.Context()
 		userID := ctx.Value("auth").(int)
 
-		db.SaveURL(short, string(data))
-		db.SaveUserURL(userID, storage.UserURL{
-			ShortURL:    config.Config.BaseURL + "/" + short,
+		err = db.SaveURL(userID, storage.UserURL{
+			ShortURL:    service.ShortToURL(short),
 			OriginalURL: string(data),
 		})
+		if err != nil {
+			http.Error(w, "failed to save url to database: "+err.Error(), 400)
+			return
+		}
 
 		w.WriteHeader(http.StatusCreated)
-		_, err = w.Write([]byte(config.Config.BaseURL + "/" + short))
+		_, err = w.Write([]byte(service.ShortToURL(short)))
 		if err != nil {
 			http.Error(w, "invalid requestURL", http.StatusBadRequest)
 			return
