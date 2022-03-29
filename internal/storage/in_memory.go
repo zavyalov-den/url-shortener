@@ -97,8 +97,7 @@ func (db *BasicStorage) SaveURL(userID int, url UserURL) error {
 }
 
 func NewStorage() Storage {
-	//if config.Config.DatabaseDSN != "" {
-	if false {
+	if config.Config.DatabaseDSN != "" {
 		db := NewDB()
 		db.InitDB()
 		return db
