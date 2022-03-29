@@ -65,11 +65,11 @@ func ShortenPost(db storage.Storage) http.HandlerFunc {
 			OriginalURL: req.URL,
 		})
 
-		w.WriteHeader(http.StatusCreated)
 		_, err = w.Write(resBody)
 		if err != nil {
 			http.Error(w, "invalid requestURL", http.StatusBadRequest)
 			return
 		}
+		w.WriteHeader(http.StatusCreated)
 	}
 }

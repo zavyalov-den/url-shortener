@@ -90,7 +90,7 @@ func (c *CryptoSvc) decodeAuthCookie(cookie *http.Cookie) int {
 	}
 	src, err := c.aesGCM.Open(nil, c.nonce, cookieByte, nil)
 	if err != nil {
-		fmt.Println("open", err)
+		fmt.Println("gcm open failed: ", err)
 	}
 
 	userID, err := strconv.Atoi(string(src))
@@ -110,5 +110,6 @@ func (c *CryptoSvc) createAuthCookie() *http.Cookie {
 	return &http.Cookie{
 		Name:  "auth",
 		Value: hex.EncodeToString(sealedCookie),
+		Path:  "/",
 	}
 }
