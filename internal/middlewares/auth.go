@@ -7,11 +7,11 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"github.com/zavyalov-den/url-shortener/internal/config"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 type CryptoSvc struct {
@@ -66,19 +66,23 @@ func Auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		c := GetCryptoSvcInstance()
 
-		cookie, err := r.Cookie("auth")
-		if errors.Is(err, http.ErrNoCookie) {
-			cookie = c.createAuthCookie()
-		} else if err != nil {
-			cookie = c.createAuthCookie()
-		}
+		cookie, _ := r.Cookie("auth")
+		//if err != nil {
+		//	fmt.Println(err)
+		//}
+		//if err = cookie.Valid(); err != nil {
+		//	fmt.Println("cookie is not valid: ", err)
+		//	cookie = c.createAuthCookie()
+		//}
 
 		userID := c.decodeAuthCookie(cookie)
 		if userID == 0 {
 			cookie = c.createAuthCookie()
 			userID = c.decodeAuthCookie(cookie)
+			fmt.Println("new userID: ", userID)
 		}
 		ctx := context.WithValue(r.Context(), "auth", userID)
+		fmt.Println("new userID: ", userID)
 
 		http.SetCookie(w, cookie)
 
@@ -88,11 +92,12 @@ func Auth(next http.Handler) http.Handler {
 }
 
 func (c *CryptoSvc) decodeAuthCookie(cookie *http.Cookie) int {
-	cookieByte, err := hex.DecodeString(cookie.Value)
+	cookieBytes, err := hex.DecodeString(cookie.Value)
 	if err != nil {
 		fmt.Println("failed to decode a cookie :(", err)
 	}
-	src, err := c.aesGCM.Open(nil, c.nonce, cookieByte, nil)
+
+	src, err := c.aesGCM.Open(nil, c.nonce, cookieBytes, nil)
 	if err != nil {
 		fmt.Println("gcm open failed: ", err)
 	}
@@ -105,14 +110,15 @@ func (c *CryptoSvc) decodeAuthCookie(cookie *http.Cookie) int {
 }
 
 func (c *CryptoSvc) createAuthCookie() *http.Cookie {
-	c.lastUserId++
+	//c.lastUserId++
 
 	byteString := hex.EncodeToString([]byte(strconv.Itoa(c.lastUserId)))
 
 	sealedCookie := c.aesGCM.Seal(nil, c.nonce, []byte(byteString), nil)
 
 	return &http.Cookie{
-		Name:  "auth",
-		Value: hex.EncodeToString(sealedCookie),
+		Name:    "auth",
+		Value:   hex.EncodeToString(sealedCookie),
+		Expires: time.Now().Add(8 * time.Hour),
 	}
 }
