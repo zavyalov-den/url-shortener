@@ -19,17 +19,20 @@ func GetUserUrls(db *storage.DB) http.HandlerFunc {
 
 		if len(urls) == 0 {
 			w.WriteHeader(http.StatusNoContent)
+			return
 		}
 
 		body, err := json.Marshal(urls)
 		if err != nil {
 			fmt.Println(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 		_, err = w.Write(body)
 		if err != nil {
 			fmt.Println(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
 		w.WriteHeader(http.StatusOK)
