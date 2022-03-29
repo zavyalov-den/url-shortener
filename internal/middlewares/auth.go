@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -47,11 +46,11 @@ func GetCryptoSvcInstance() *CryptoSvc {
 	}
 
 	nonce := make([]byte, aesGCM.NonceSize())
-	_, err = rand.Read(nonce)
-	if err != nil {
-		fmt.Println("read err: ", err.Error())
-		fmt.Println(err.Error())
-	}
+	//_, err = rand.Read(nonce)
+	//if err != nil {
+	//	fmt.Println("read err: ", err.Error())
+	//	fmt.Println(err.Error())
+	//}
 
 	cryptoSvc = &CryptoSvc{
 		aesBlock:   aesBlock,
@@ -66,10 +65,11 @@ func Auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		c := GetCryptoSvcInstance()
 
-		cookie, _ := r.Cookie("auth")
-		//if err != nil {
-		//	fmt.Println(err)
-		//}
+		cookie, err := r.Cookie("auth")
+		if err != nil {
+			fmt.Println(err)
+			cookie = c.createAuthCookie()
+		}
 		//if err = cookie.Valid(); err != nil {
 		//	fmt.Println("cookie is not valid: ", err)
 		//	cookie = c.createAuthCookie()
@@ -110,7 +110,7 @@ func (c *CryptoSvc) decodeAuthCookie(cookie *http.Cookie) int {
 }
 
 func (c *CryptoSvc) createAuthCookie() *http.Cookie {
-	//c.lastUserId++
+	c.lastUserId++
 
 	byteString := hex.EncodeToString([]byte(strconv.Itoa(c.lastUserId)))
 
@@ -120,5 +120,6 @@ func (c *CryptoSvc) createAuthCookie() *http.Cookie {
 		Name:    "auth",
 		Value:   hex.EncodeToString(sealedCookie),
 		Expires: time.Now().Add(8 * time.Hour),
+		Path:    "/",
 	}
 }
