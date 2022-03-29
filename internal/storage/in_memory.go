@@ -100,7 +100,7 @@ func (db *InMemoryStorage) SaveUserURL(userID int, url UserURL) error {
 }
 
 func NewStorage() Storage {
-	if config.Config.DatabaseDSN != "postgres://postgres:123@localhost:5432/postgres" {
+	if config.Config.DatabaseDSN != "" {
 		db := NewDB()
 		db.InitDB()
 		return db
