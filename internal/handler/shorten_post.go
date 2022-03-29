@@ -3,7 +3,6 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/zavyalov-den/url-shortener/internal/config"
 	"github.com/zavyalov-den/url-shortener/internal/service"
 	"github.com/zavyalov-den/url-shortener/internal/storage"
 	"io"
@@ -46,7 +45,7 @@ func ShortenPost(db storage.Storage) http.HandlerFunc {
 		}
 
 		short := service.Shorten([]byte(req.URL))
-		res.Result = config.Config.BaseURL + "/" + short
+		res.Result = service.ShortToURL(short)
 
 		resBody, err := json.Marshal(res)
 		if err != nil {
@@ -68,11 +67,11 @@ func ShortenPost(db storage.Storage) http.HandlerFunc {
 			return
 		}
 
+		w.WriteHeader(http.StatusCreated)
 		_, err = w.Write(resBody)
 		if err != nil {
 			http.Error(w, "invalid requestURL", http.StatusBadRequest)
 			return
 		}
-		w.WriteHeader(http.StatusCreated)
 	}
 }
