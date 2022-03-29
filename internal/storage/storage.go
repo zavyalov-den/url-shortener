@@ -42,11 +42,9 @@ func (d *DB) GetURL(short string) (string, error) {
 func (d *DB) GetUserURLs(id int) []UserURL {
 	var result []UserURL
 
-	fmt.Println("userid", id)
 	//language=sql
 	query := `
 		select urls.short_url, urls.full_url from urls 
--- 		select * from urls 
 		join user_urls u on urls.id = u.url_id
 		where u.user_id = $1; 
 	`
@@ -61,14 +59,12 @@ func (d *DB) GetUserURLs(id int) []UserURL {
 		if err != nil {
 			return nil
 		}
-		fmt.Println(values)
+		fmt.Println("short", values[0], "full: ", values[1])
+		result = append(result, UserURL{
+			ShortURL:    values[0].(string),
+			OriginalURL: values[1].(string),
+		})
 	}
-	//values, err := rows.Values()
-	//if err != nil {
-	//	fmt.Println(err.Error())
-	//	return nil
-	//}
-	//fmt.Println(values)
 
 	return result
 }
