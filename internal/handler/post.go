@@ -9,13 +9,12 @@ import (
 
 func Post(db storage.Storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
-
 		data, err := io.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, "invalid requestURL", http.StatusBadRequest)
 			return
 		}
+		defer r.Body.Close()
 
 		if len(data) == 0 {
 			http.Error(w, "request body must not be empty", 400)
