@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func GetUserUrls(db *storage.DB) http.HandlerFunc {
+func GetUserUrls(db storage.Storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
@@ -15,7 +15,7 @@ func GetUserUrls(db *storage.DB) http.HandlerFunc {
 
 		userID := ctx.Value("auth").(int)
 
-		urls := db.GetUserUrls(userID)
+		urls := db.GetUserURLs(userID)
 
 		if len(urls) == 0 {
 			w.WriteHeader(http.StatusNoContent)

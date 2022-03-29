@@ -16,7 +16,7 @@ import (
 func Test_PostHandler(t *testing.T) {
 	tests := []struct {
 		name   string
-		db     *storage.DB
+		db     *storage.InMemoryStorage
 		body   string
 		params string
 		want   want
@@ -70,7 +70,7 @@ func Test_PostHandler(t *testing.T) {
 	}
 }
 
-func newPostTestServer(db *storage.DB) *httptest.Server {
+func newPostTestServer(db *storage.InMemoryStorage) *httptest.Server {
 	r := chi.NewRouter()
 
 	r.Post("/", Post(db))

@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-func Post(db *storage.DB) http.HandlerFunc {
+func Post(db storage.Storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
@@ -28,8 +28,8 @@ func Post(db *storage.DB) http.HandlerFunc {
 		ctx := r.Context()
 		userID := ctx.Value("auth").(int)
 
-		db.Save(short, string(data))
-		db.SaveUserUrl(userID, storage.UserURL{
+		db.SaveURL(short, string(data))
+		db.SaveUserURL(userID, storage.UserURL{
 			ShortURL:    config.Config.BaseURL + "/" + short,
 			OriginalURL: string(data),
 		})

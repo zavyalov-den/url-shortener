@@ -7,13 +7,13 @@ import (
 	"net/http"
 )
 
-func Get(db *storage.DB) http.HandlerFunc {
+func Get(db storage.Storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("get handler. w: ")
 		fmt.Println(w)
 		shortURL := chi.URLParam(r, "shortUrl")
 
-		longURL, err := db.Get(shortURL)
+		longURL, err := db.GetURL(shortURL)
 		if err != nil {
 			fmt.Printf("long: %s, short: %s\n", longURL, shortURL)
 			http.NotFound(w, r)

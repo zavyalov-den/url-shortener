@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/zavyalov-den/url-shortener/internal/config"
 	"github.com/zavyalov-den/url-shortener/internal/service"
 	"github.com/zavyalov-den/url-shortener/internal/storage"
@@ -18,7 +19,7 @@ type response struct {
 	Error  string `json:"error,omitempty"`
 }
 
-func ShortenPost(db *storage.DB) http.HandlerFunc {
+func ShortenPost(db storage.Storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
@@ -56,8 +57,10 @@ func ShortenPost(db *storage.DB) http.HandlerFunc {
 		ctx := r.Context()
 		userID := ctx.Value("auth").(int)
 
-		db.Save(short, req.URL)
-		db.SaveUserUrl(userID, storage.UserURL{
+		fmt.Println("current user ID: ", userID)
+
+		db.SaveURL(short, req.URL)
+		db.SaveUserURL(userID, storage.UserURL{
 			ShortURL:    res.Result,
 			OriginalURL: req.URL,
 		})

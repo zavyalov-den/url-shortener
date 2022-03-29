@@ -1,102 +1,142 @@
 package storage
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/zavyalov-den/url-shortener/internal/config"
-	"os"
 )
 
 type DB struct {
-	db       map[string]string
-	userURLs map[int][]UserURL
+	db *pgxpool.Pool
 }
 
-type UserURL struct {
-	ShortURL    string `json:"short_url"`
-	OriginalURL string `json:"original_url"`
-}
-
-func (db *DB) Save(key, value string) {
-	db.db[key] = value
-	db.saveToFile()
-}
-
-func (db *DB) Get(key string) (string, error) {
-	longURL, ok := db.db[key]
-	if !ok {
-		return "", fmt.Errorf("failed to get an URL")
+func (d *DB) SaveURL(k, v string) error {
+	//language=sql
+	query := `
+		insert into urls (short_url, full_url) VALUES ($1, $2)
+		on conflict DO NOTHING;
+	`
+	_, err := d.db.Query(context.Background(), query, k, v)
+	if err != nil {
+		return err
 	}
 
-	return longURL, nil
+	return nil
 }
 
-func (db *DB) saveToFile() {
-	var file *os.File
-
-	flag := os.O_CREATE | os.O_WRONLY | os.O_TRUNC
-	file, err := os.OpenFile(config.Config.FileStoragePath, flag, 0755)
+func (d *DB) GetURL(short string) (string, error) {
+	var fullURL string
+	//language=sql
+	query := `
+		select full_url from urls where short_url = $1 limit 1;
+	`
+	err := d.db.QueryRow(context.Background(), query, short).Scan(&fullURL)
 	if err != nil {
-		panic("failed to open storage file")
+		return "", err
 	}
 
-	defer file.Close()
-
-	data, err := json.Marshal(db.db)
-	if err != nil {
-		panic("failed to read from DB")
-	}
-
-	_, err = file.Write(data)
-	if err != nil {
-		panic("failed to write to DB")
-	}
+	return fullURL, nil
 }
 
-func (db *DB) readFromFile() {
-	storage := make(map[string]string)
+func (d *DB) GetUserURLs(id int) []UserURL {
+	var result []UserURL
 
-	data, err := os.ReadFile(config.Config.FileStoragePath)
+	fmt.Println("userid", id)
+	//language=sql
+	query := `
+		select urls.short_url, urls.full_url from urls 
+-- 		select * from urls 
+		join user_urls u on urls.id = u.url_id
+		where u.user_id = $1; 
+	`
+	rows, err := d.db.Query(context.Background(), query, id)
 	if err != nil {
-		if _, createErr := os.Create(config.Config.FileStoragePath); createErr != nil {
-			panic("can't read or create storage file.")
+		fmt.Println(err.Error())
+		return nil
+	}
+	if rows.Next() {
+		fmt.Println(rows)
+		values, err := rows.Values()
+		if err != nil {
+			return nil
+		}
+		fmt.Println(values)
+	}
+	//values, err := rows.Values()
+	//if err != nil {
+	//	fmt.Println(err.Error())
+	//	return nil
+	//}
+	//fmt.Println(values)
+
+	return result
+}
+
+func (d *DB) SaveUserURL(userID int, url UserURL) error {
+	var urlID int
+	//language=sql
+	query := `
+		insert into urls (short_url, full_url) VALUES ($1, $2)
+		on conflict DO NOTHING returning id;
+	`
+	err := d.db.QueryRow(context.Background(), query, url.ShortURL, url.OriginalURL).Scan(&urlID)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(urlID)
+	//language=sql
+	query = `
+		insert into user_urls (url_id, user_id) VALUES ($1, $2) on conflict do nothing ;
+	`
+
+	_, err = d.db.Query(context.Background(), query, urlID, userID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func NewDB() *DB {
+	cfg, err := pgxpool.ParseConfig(config.Config.DatabaseDSN)
+	if err != nil {
+		panic("failed to init db")
+	}
+
+	db, err := pgxpool.ConnectConfig(context.Background(), cfg)
+	if err != nil {
+		panic("db connection failed")
+	}
+
+	return &DB{db: db}
+}
+
+func (d *DB) InitDB() {
+	// language=sql
+	queries := []string{`
+		CREATE TABLE if not exists urls (
+			id serial primary key,
+			short_url text not null unique,
+			full_url text not null
+		);
+		`, `
+		CREATE TABLE if not exists user_urls (
+		    user_id int, -- references users.id
+		    url_id int
+		);
+-- 
+-- 		CREATE TABLE users (
+-- 		    id serial primary key,
+-- 		    token text
+-- 		)
+	`}
+
+	for _, query := range queries {
+		_, err := d.db.Query(context.Background(), query)
+		if err != nil {
+			panic(err.Error())
 		}
 	}
-
-	err = json.Unmarshal(data, &storage)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	db.db = storage
-}
-
-func (db *DB) GetUserUrls(id int) []UserURL {
-	return db.userURLs[id]
-}
-
-func (db *DB) SaveUserUrl(userID int, url UserURL) {
-	urls := db.userURLs[userID]
-
-	for _, v := range urls {
-		if v.ShortURL == url.ShortURL {
-			return
-		}
-	}
-
-	urls = append(urls, url)
-	db.userURLs[userID] = urls
-}
-
-func NewStorage() *DB {
-	storage := &DB{
-		db:       make(map[string]string),
-		userURLs: make(map[int][]UserURL),
-	}
-	//if fileStorage {
-	if config.Config.FileStoragePath != "" {
-		storage.readFromFile()
-	}
-
-	return storage
 }

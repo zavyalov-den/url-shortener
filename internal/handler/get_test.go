@@ -19,7 +19,7 @@ type want struct {
 func Test_GetHandler(t *testing.T) {
 	tests := []struct {
 		name   string
-		db     *storage.DB
+		db     storage.Storage
 		body   string
 		params string
 		want   want
@@ -82,16 +82,16 @@ func Test_GetHandler(t *testing.T) {
 	}
 }
 
-func newTestDB(notEmpty bool) *storage.DB {
+func newTestDB(notEmpty bool) storage.Storage {
 	db := storage.NewStorage()
 	if notEmpty {
-		db.Save("e9db20b2", "https://yandex.ru")
+		db.SaveURL("e9db20b2", "https://yandex.ru")
 		return db
 	}
 	return db
 }
 
-func newGetTestServer(db *storage.DB) *httptest.Server {
+func newGetTestServer(db storage.Storage) *httptest.Server {
 	r := chi.NewRouter()
 
 	r.Get("/{shortUrl}", Get(db))
