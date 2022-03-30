@@ -112,24 +112,19 @@ func (d *DB) SaveBatch(ctx context.Context, b []BatchRequest) ([]BatchResponse, 
 
 	var result []BatchResponse
 
+	//conn, err := d.db.Acquire(ctx)
+	//if err != nil {
+	//	return nil, err
+	//}
+
 	batch := &pgx.Batch{}
 	//language=sql
 	queue := "insert into urls (short_url, full_url, correlation_id) values ($1, $2, $3);"
 
-	conn, err := d.db.Acquire(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	tx, err := conn.Begin(ctx)
+	tx, err := d.db.Begin(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start a tx: %s", err.Error())
 	}
-
-	//stmt, err := tx.Prepare(ctx, "ins", )
-	//if err != nil {
-	//	return nil, fmt.Errorf("failed to prepare statement: %s", err.Error())
-	//}
 
 	for _, v := range b {
 		short := service.Shorten([]byte(v.OriginalURL))
@@ -140,7 +135,14 @@ func (d *DB) SaveBatch(ctx context.Context, b []BatchRequest) ([]BatchResponse, 
 		})
 	}
 	fmt.Println(batch)
-	tx.SendBatch(ctx, batch)
+	batchResult := tx.SendBatch(ctx, batch)
+
+	ct, err := batchResult.Exec()
+	if err != nil {
+		return nil, fmt.Errorf("failed to br.exec: %s", err)
+	}
+
+	fmt.Println(ct.RowsAffected())
 
 	err = tx.Commit(ctx)
 	if err != nil {
