@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/zavyalov-den/url-shortener/internal/config"
@@ -11,6 +12,7 @@ type Storage interface {
 	GetURL(k string) (string, error)
 	GetUserURLs(id int) []UserURL
 	SaveURL(id int, url UserURL) error
+	Ping(ctx context.Context) error
 }
 
 type BasicStorage struct {
@@ -93,6 +95,21 @@ func (db *BasicStorage) SaveURL(userID int, url UserURL) error {
 
 	urls = append(urls, url)
 	db.userURLs[userID] = urls
+	return nil
+}
+
+func (d *DB) Ping(ctx context.Context) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	err := d.db.Ping(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (db *BasicStorage) Ping(ctx context.Context) error {
 	return nil
 }
 
