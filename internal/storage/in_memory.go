@@ -98,11 +98,13 @@ func (db *BasicStorage) SaveURL(userID int, url UserURL) error {
 
 func NewStorage() Storage {
 	if config.Config.DatabaseDSN != "" {
+		fmt.Println("using DB")
 		db := NewDB()
 		db.InitDB()
 		return db
 
 	} else {
+		fmt.Println("in memory storage")
 		storage := &BasicStorage{
 			db:       make(map[string]string),
 			userURLs: make(map[int][]UserURL),
