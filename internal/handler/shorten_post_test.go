@@ -17,7 +17,7 @@ import (
 func Test_shortenPost(t *testing.T) {
 	tests := []struct {
 		name string
-		db   *storage.BasicStorage
+		db   storage.Storage
 		body string
 		want want
 	}{
@@ -64,7 +64,7 @@ func Test_shortenPost(t *testing.T) {
 	}
 }
 
-func newShortenPostTestServer(db *storage.BasicStorage) *httptest.Server {
+func newShortenPostTestServer(db storage.Storage) *httptest.Server {
 	r := chi.NewRouter()
 
 	r.Post("/api/shorten", ShortenPost(db))
