@@ -14,6 +14,9 @@ type DB struct {
 }
 
 func (d *DB) GetURL(short string) (string, error) {
+	_, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	var fullURL string
 	//language=sql
 	query := `
@@ -28,6 +31,9 @@ func (d *DB) GetURL(short string) (string, error) {
 }
 
 func (d *DB) GetUserURLs(id int) []UserURL {
+	_, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	var result []UserURL
 
 	//language=sql
@@ -57,6 +63,9 @@ func (d *DB) GetUserURLs(id int) []UserURL {
 }
 
 func (d *DB) SaveURL(userID int, url UserURL) error {
+	_, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	var urlID int
 
 	//language=sql
@@ -133,7 +142,7 @@ func (d *DB) InitDB() {
 	for _, query := range queries {
 		_, err := d.db.Query(context.Background(), query)
 		if err != nil {
-			panic(err.Error())
+			fmt.Println(err)
 		}
 	}
 }
