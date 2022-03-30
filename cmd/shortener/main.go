@@ -20,7 +20,7 @@ func main() {
 	r := chi.NewRouter()
 
 	r.Use(middlewares.GzipHandle)
-	//r.Use(middlewares.Auth) //test
+	r.Use(middlewares.Auth) //test
 
 	r.Post("/api/shorten", handler.ShortenPost(st))
 	r.Get("/api/user/urls", handler.GetUserUrls(st))
