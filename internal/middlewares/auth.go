@@ -4,7 +4,9 @@ import (
 	"context"
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/rand"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"github.com/zavyalov-den/url-shortener/internal/config"
@@ -24,6 +26,12 @@ var (
 	cryptoSvc *CryptoSvc
 	n         int
 )
+
+func RandomToken(n int) string {
+	b := make([]byte, n)
+	rand.Read(b)
+	return base64.RawURLEncoding.EncodeToString(b)
+}
 
 func GetCryptoSvcInstance() *CryptoSvc {
 	if cryptoSvc != nil {
