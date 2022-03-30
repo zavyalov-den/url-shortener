@@ -14,7 +14,7 @@ type DB struct {
 }
 
 func (d *DB) GetURL(short string) (string, error) {
-	_, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	var fullURL string
@@ -22,7 +22,7 @@ func (d *DB) GetURL(short string) (string, error) {
 	query := `
 		select full_url from urls where short_url = $1 limit 1;
 	`
-	err := d.db.QueryRow(context.Background(), query, short).Scan(&fullURL)
+	err := d.db.QueryRow(ctx, query, short).Scan(&fullURL)
 	if err != nil {
 		return "", err
 	}
@@ -31,7 +31,7 @@ func (d *DB) GetURL(short string) (string, error) {
 }
 
 func (d *DB) GetUserURLs(id int) []UserURL {
-	_, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	var result []UserURL
@@ -42,7 +42,7 @@ func (d *DB) GetUserURLs(id int) []UserURL {
 		join user_urls u on urls.id = u.url_id
 		where u.user_id = $1; 
 	`
-	rows, err := d.db.Query(context.Background(), query, id)
+	rows, err := d.db.Query(ctx, query, id)
 	if err != nil {
 		fmt.Println(err.Error())
 		return nil
@@ -63,7 +63,7 @@ func (d *DB) GetUserURLs(id int) []UserURL {
 }
 
 func (d *DB) SaveURL(userID int, url UserURL) error {
-	_, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	var urlID int
@@ -72,7 +72,7 @@ func (d *DB) SaveURL(userID int, url UserURL) error {
 	query := `
 		SELECT id from urls where short_url = $1;
 	`
-	err := d.db.QueryRow(context.Background(), query, url.ShortURL).Scan(&urlID)
+	err := d.db.QueryRow(ctx, query, url.ShortURL).Scan(&urlID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			// it's okay. happens :)
@@ -87,7 +87,7 @@ func (d *DB) SaveURL(userID int, url UserURL) error {
 		insert into urls (short_url, full_url) VALUES ($1, $2);
 		`
 
-		_, err = d.db.Query(context.Background(), query, url.ShortURL, url.OriginalURL)
+		_, err = d.db.Query(ctx, query, url.ShortURL, url.OriginalURL)
 		if err != nil {
 			return fmt.Errorf("insert into user_urls err: %s", err)
 		}
@@ -97,7 +97,7 @@ func (d *DB) SaveURL(userID int, url UserURL) error {
 		insert into user_urls (url_id, user_id) VALUES ($1, $2);
 		`
 
-	_, err = d.db.Query(context.Background(), query, urlID, userID)
+	_, err = d.db.Query(ctx, query, urlID, userID)
 	if err != nil {
 		return fmt.Errorf("insert into user_urls err: %s", err)
 	}
@@ -120,6 +120,8 @@ func NewDB() *DB {
 }
 
 func (d *DB) InitDB() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	// language=sql
 	queries := []string{`
 		CREATE TABLE if not exists urls (
@@ -140,7 +142,7 @@ func (d *DB) InitDB() {
 	`}
 
 	for _, query := range queries {
-		_, err := d.db.Query(context.Background(), query)
+		_, err := d.db.Query(ctx, query)
 		if err != nil {
 			fmt.Println(err)
 		}
