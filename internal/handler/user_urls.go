@@ -13,7 +13,10 @@ func GetUserUrls(db storage.Storage) http.HandlerFunc {
 
 		ctx := r.Context()
 
-		userID := ctx.Value("auth").(int)
+		userID, ok := ctx.Value("auth").(int)
+		if !ok {
+			userID = 0
+		}
 
 		urls := db.GetUserURLs(userID)
 

@@ -24,7 +24,10 @@ func Post(db storage.Storage) http.HandlerFunc {
 		short := service.Shorten(data)
 
 		ctx := r.Context()
-		userID := ctx.Value("auth").(int)
+		userID, ok := ctx.Value("auth").(int)
+		if !ok {
+			userID = 0
+		}
 
 		err = db.SaveURL(userID, storage.UserURL{
 			ShortURL:    service.ShortToURL(short),

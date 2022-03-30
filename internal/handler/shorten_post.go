@@ -54,7 +54,10 @@ func ShortenPost(db storage.Storage) http.HandlerFunc {
 		}
 
 		ctx := r.Context()
-		userID := ctx.Value("auth").(int)
+		userID, ok := ctx.Value("auth").(int)
+		if !ok {
+			userID = 0
+		}
 
 		fmt.Println("current user ID: ", userID)
 
