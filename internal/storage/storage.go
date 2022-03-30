@@ -64,7 +64,8 @@ func (d *DB) SaveURL(userID int, url UserURL) error {
 	`
 	err := d.db.QueryRow(context.Background(), query, url.ShortURL).Scan(&urlID)
 	if err != nil {
-		return fmt.Errorf("select from urls failed: %s", err)
+		//return fmt.Errorf("select from urls failed: %s", err)
+		fmt.Printf("select from urls failed: %s", err)
 	}
 	if urlID == 0 {
 		//language=sql
