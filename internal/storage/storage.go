@@ -105,6 +105,17 @@ func (d *DB) SaveURL(userID int, url UserURL) error {
 	return nil
 }
 
+func (d *DB) Ping(ctx context.Context) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	err := d.db.Ping(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func NewDB() *DB {
 	cfg, err := pgxpool.ParseConfig(config.Config.DatabaseDSN)
 	if err != nil {

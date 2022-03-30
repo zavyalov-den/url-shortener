@@ -20,6 +20,6 @@ func Get(db storage.Storage) http.HandlerFunc {
 
 		w.Header().Set("Location", longURL)
 		fmt.Println(longURL)
-		w.WriteHeader(http.StatusTemporaryRedirect)
+		//w.WriteHeader(http.StatusTemporaryRedirect)
 	}
 }
