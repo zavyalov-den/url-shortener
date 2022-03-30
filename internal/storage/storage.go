@@ -7,6 +7,7 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/zavyalov-den/url-shortener/internal/config"
+	"github.com/zavyalov-den/url-shortener/internal/service"
 )
 
 type DB struct {
@@ -105,8 +106,49 @@ func (d *DB) SaveURL(userID int, url UserURL) error {
 	return nil
 }
 
-func (d *DB) SaveBatch(b []BatchRequest) ([]BatchResponse, error) {
-	return nil, fmt.Errorf("no batches for in memory storage yet")
+func (d *DB) SaveBatch(ctx context.Context, b []BatchRequest) ([]BatchResponse, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	var result []BatchResponse
+
+	batch := &pgx.Batch{}
+	//language=sql
+	queue := "insert into urls (short_url, full_url, correlation_id) values ($1, $2, $3);"
+
+	conn, err := d.db.Acquire(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	tx, err := conn.Begin(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to start a tx: %s", err.Error())
+	}
+
+	//stmt, err := tx.Prepare(ctx, "ins", )
+	//if err != nil {
+	//	return nil, fmt.Errorf("failed to prepare statement: %s", err.Error())
+	//}
+
+	for _, v := range b {
+		short := service.Shorten([]byte(v.OriginalURL))
+		batch.Queue(queue, short, v.CorrelationID, v.OriginalURL)
+		result = append(result, BatchResponse{
+			CorrelationID: v.CorrelationID,
+			ShortURL:      short,
+		})
+	}
+	fmt.Println(batch)
+	tx.SendBatch(ctx, batch)
+
+	err = tx.Commit(ctx)
+	if err != nil {
+		tx.Rollback(ctx)
+		return nil, fmt.Errorf("failed to commit a tx: %s", err.Error())
+	}
+
+	return result, nil
 }
 
 func (d *DB) Ping(ctx context.Context) error {
@@ -141,7 +183,7 @@ func (d *DB) InitDB() {
 	queries := []string{`
 		CREATE TABLE if not exists urls (
 			id serial primary key,
-			short_url text not null unique,
+			short_url text not null,
 			full_url text not null,
 			correlation_id text
 		);

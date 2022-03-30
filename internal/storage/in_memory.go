@@ -13,7 +13,7 @@ type Storage interface {
 	GetUserURLs(id int) []UserURL
 	SaveURL(id int, url UserURL) error
 	Ping(ctx context.Context) error
-	SaveBatch(b []BatchRequest) ([]BatchResponse, error)
+	SaveBatch(ctx context.Context, b []BatchRequest) ([]BatchResponse, error)
 }
 
 type BasicStorage struct {
@@ -113,8 +113,7 @@ func (db *BasicStorage) Ping(ctx context.Context) error {
 	return nil
 }
 
-func (db *BasicStorage) SaveBatch(b []BatchRequest) ([]BatchResponse, error) {
-	//pgx.
+func (db *BasicStorage) SaveBatch(ctx context.Context, b []BatchRequest) ([]BatchResponse, error) {
 	return nil, fmt.Errorf("no batches for in memory storage yet")
 }
 
