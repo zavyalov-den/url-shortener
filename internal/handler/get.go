@@ -15,6 +15,7 @@ func Get(db storage.Storage) http.HandlerFunc {
 		longURL, err := db.GetURL(service.ShortToURL(short))
 		if err != nil {
 			fmt.Printf("long: %s, short: %s\n", longURL, short)
+			fmt.Printf(err.Error())
 			http.NotFound(w, r)
 			return
 		}

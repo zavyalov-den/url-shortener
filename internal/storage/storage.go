@@ -2,7 +2,9 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/zavyalov-den/url-shortener/internal/config"
 )
@@ -45,7 +47,6 @@ func (d *DB) GetUserURLs(id int) []UserURL {
 		if err != nil {
 			return nil
 		}
-		fmt.Println("short", values[0], "full: ", values[1])
 		result = append(result, UserURL{
 			ShortURL:    values[0].(string),
 			OriginalURL: values[1].(string),
@@ -64,21 +65,33 @@ func (d *DB) SaveURL(userID int, url UserURL) error {
 	`
 	err := d.db.QueryRow(context.Background(), query, url.ShortURL).Scan(&urlID)
 	if err != nil {
-		//return fmt.Errorf("select from urls failed: %s", err)
-		fmt.Printf("select from urls failed: %s", err)
+		if errors.Is(err, pgx.ErrNoRows) {
+			// it's okay. happens :)
+		} else {
+			return fmt.Errorf("select from urls failed: %s", err)
+		}
 	}
+	fmt.Println(urlID)
 	if urlID == 0 {
 		//language=sql
 		query = `
-		insert into user_urls (url_id, user_id) VALUES ($1, $2) on conflict do nothing;
+		insert into urls (short_url, full_url) VALUES ($1, $2);
 		`
 
-		_, err = d.db.Query(context.Background(), query, urlID, userID)
+		_, err = d.db.Query(context.Background(), query, url.ShortURL, url.OriginalURL)
 		if err != nil {
 			return fmt.Errorf("insert into user_urls err: %s", err)
 		}
 	}
-	fmt.Println(urlID)
+	//language=sql
+	query = `
+		insert into user_urls (url_id, user_id) VALUES ($1, $2);
+		`
+
+	_, err = d.db.Query(context.Background(), query, urlID, userID)
+	if err != nil {
+		return fmt.Errorf("insert into user_urls err: %s", err)
+	}
 
 	return nil
 }
