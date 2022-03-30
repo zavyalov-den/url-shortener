@@ -13,6 +13,7 @@ type Storage interface {
 	GetUserURLs(id int) []UserURL
 	SaveURL(id int, url UserURL) error
 	Ping(ctx context.Context) error
+	SaveBatch(b []BatchRequest) ([]BatchResponse, error)
 }
 
 type BasicStorage struct {
@@ -25,6 +26,16 @@ var _ Storage = (*BasicStorage)(nil)
 type UserURL struct {
 	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
+}
+
+type BatchRequest struct {
+	CorrelationID string `json:"correlation_id"`
+	OriginalURL   string `json:"original_url"`
+}
+
+type BatchResponse struct {
+	CorrelationID string `json:"correlation_id"`
+	ShortURL      string `json:"short_url"`
 }
 
 func (db *BasicStorage) GetURL(key string) (string, error) {
@@ -100,6 +111,11 @@ func (db *BasicStorage) SaveURL(userID int, url UserURL) error {
 
 func (db *BasicStorage) Ping(ctx context.Context) error {
 	return nil
+}
+
+func (db *BasicStorage) SaveBatch(b []BatchRequest) ([]BatchResponse, error) {
+	//pgx.
+	return nil, fmt.Errorf("no batches for in memory storage yet")
 }
 
 func NewStorage() Storage {

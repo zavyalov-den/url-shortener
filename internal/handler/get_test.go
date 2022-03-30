@@ -4,6 +4,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/zavyalov-den/url-shortener/internal/service"
 	"github.com/zavyalov-den/url-shortener/internal/storage"
 	"io"
 	"net/http"
@@ -85,7 +86,10 @@ func Test_GetHandler(t *testing.T) {
 func newTestDB(notEmpty bool) storage.Storage {
 	db := storage.NewStorage()
 	if notEmpty {
-		db.SaveURL("e9db20b2", "https://yandex.ru")
+		db.SaveURL(1, storage.UserURL{
+			ShortURL:    service.ShortToURL("e9db20b2"),
+			OriginalURL: "",
+		})
 		return db
 	}
 	return db
@@ -94,7 +98,7 @@ func newTestDB(notEmpty bool) storage.Storage {
 func newGetTestServer(db storage.Storage) *httptest.Server {
 	r := chi.NewRouter()
 
-	r.Get("/{shortUrl}", Get(db))
+	r.Get("/{shortUrl}", GetFullURL(db))
 
 	return httptest.NewServer(r)
 }

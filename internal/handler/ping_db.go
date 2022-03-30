@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func Ping(db storage.Storage) http.HandlerFunc {
+func PingDB(db storage.Storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 

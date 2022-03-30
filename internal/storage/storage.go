@@ -105,6 +105,10 @@ func (d *DB) SaveURL(userID int, url UserURL) error {
 	return nil
 }
 
+func (d *DB) SaveBatch(b []BatchRequest) ([]BatchResponse, error) {
+	return nil, fmt.Errorf("no batches for in memory storage yet")
+}
+
 func (d *DB) Ping(ctx context.Context) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -138,7 +142,8 @@ func (d *DB) InitDB() {
 		CREATE TABLE if not exists urls (
 			id serial primary key,
 			short_url text not null unique,
-			full_url text not null
+			full_url text not null,
+			correlation_id text
 		);
 		`, `
 		CREATE TABLE if not exists user_urls (

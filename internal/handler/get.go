@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func Get(db storage.Storage) http.HandlerFunc {
+func GetFullURL(db storage.Storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		short := chi.URLParam(r, "shortUrl")
 

@@ -9,23 +9,23 @@ import (
 	"net/http"
 )
 
-type request struct {
+type shortenRequest struct {
 	URL string `json:"url"`
 }
 
-type response struct {
+type shortenResponse struct {
 	Result string `json:"result,omitempty"`
 	Error  string `json:"error,omitempty"`
 }
 
-func ShortenPost(db storage.Storage) http.HandlerFunc {
+func ShortenJSON(db storage.Storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
 		defer r.Body.Close()
 
-		req := &request{}
-		res := &response{}
+		req := &shortenRequest{}
+		res := &shortenResponse{}
 
 		data, err := io.ReadAll(r.Body)
 		if err != nil {

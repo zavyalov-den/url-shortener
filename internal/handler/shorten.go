@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func Post(db storage.Storage) http.HandlerFunc {
+func Shorten(db storage.Storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		data, err := io.ReadAll(r.Body)
 		if err != nil {
