@@ -11,20 +11,6 @@ type DB struct {
 	db *pgxpool.Pool
 }
 
-//func (d *DB) SaveURL(k, v string) error {
-//	//language=sql
-//	query := `
-//		insert into urls (short_url, full_url) VALUES ($1, $2)
-//		on conflict DO NOTHING;
-//	`
-//	_, err := d.db.Query(context.Background(), query, k, v)
-//	if err != nil {
-//		return err
-//	}
-//
-//	return nil
-//}
-
 func (d *DB) GetURL(short string) (string, error) {
 	var fullURL string
 	//language=sql
@@ -71,26 +57,27 @@ func (d *DB) GetUserURLs(id int) []UserURL {
 
 func (d *DB) SaveURL(userID int, url UserURL) error {
 	var urlID int
+
 	//language=sql
 	query := `
-		insert into urls (short_url, full_url) VALUES ($1, $2)
-		on conflict DO NOTHING returning id;
+		SELECT id from urls where short_url = $1;
 	`
-	err := d.db.QueryRow(context.Background(), query, url.ShortURL, url.OriginalURL).Scan(&urlID)
+	err := d.db.QueryRow(context.Background(), query, url.ShortURL).Scan(&urlID)
 	if err != nil {
-		return err
+		return fmt.Errorf("select from urls failed: %s", err)
 	}
+	if urlID == 0 {
+		//language=sql
+		query = `
+		insert into user_urls (url_id, user_id) VALUES ($1, $2) on conflict do nothing;
+		`
 
+		_, err = d.db.Query(context.Background(), query, urlID, userID)
+		if err != nil {
+			return fmt.Errorf("insert into user_urls err: %s", err)
+		}
+	}
 	fmt.Println(urlID)
-	//language=sql
-	query = `
-		insert into user_urls (url_id, user_id) VALUES ($1, $2) on conflict do nothing ;
-	`
-
-	_, err = d.db.Query(context.Background(), query, urlID, userID)
-	if err != nil {
-		return err
-	}
 
 	return nil
 }
