@@ -12,7 +12,7 @@ type config struct {
 	ServerAddress   string `env:"SERVER_ADDRESS" envDefault:":8080"`
 	BaseURL         string `env:"BASE_URL" envDefault:"http://localhost:8080"`
 	FileStoragePath string `env:"FILE_STORAGE_PATH" envDefault:"./storage.json"`
-	AuthKey         string `env:"AUTH_KEY" envDefault:"some key"`
+	AuthKey         string `env:"AUTH_KEY" envDefault:"auth"`
 	DatabaseDSN     string `env:"DATABASE_DSN" envDefault:""`
 }
 
