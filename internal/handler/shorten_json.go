@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/zavyalov-den/url-shortener/internal/service"
 	"github.com/zavyalov-den/url-shortener/internal/storage"
@@ -65,12 +66,20 @@ func ShortenJSON(db storage.Storage) http.HandlerFunc {
 			ShortURL:    res.Result,
 			OriginalURL: req.URL,
 		})
-		if err != nil {
+		var conflictError error
+
+		if errors.Is(err, storage.ConflictError) {
+			conflictError = err
+		} else if err != nil {
 			http.Error(w, "failed to save url to database: "+err.Error(), 400)
 			return
 		}
 
-		w.WriteHeader(http.StatusCreated)
+		if conflictError != nil {
+			w.WriteHeader(http.StatusConflict)
+		} else {
+			w.WriteHeader(http.StatusCreated)
+		}
 		_, err = w.Write(resBody)
 		if err != nil {
 			http.Error(w, "invalid requestURL", http.StatusBadRequest)

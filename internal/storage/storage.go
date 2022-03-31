@@ -14,6 +14,8 @@ type DB struct {
 	db *pgxpool.Pool
 }
 
+var ConflictError = errors.New("db: insert conflict occurred")
+
 func (d *DB) GetURL(short string) (string, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -68,6 +70,7 @@ func (d *DB) SaveURL(userID int, url UserURL) error {
 	defer cancel()
 
 	var urlID int
+	var conflictError error
 
 	//language=sql
 	query := `
@@ -92,6 +95,8 @@ func (d *DB) SaveURL(userID int, url UserURL) error {
 		if err != nil {
 			return fmt.Errorf("insert into user_urls err: %s", err)
 		}
+	} else {
+		conflictError = ConflictError
 	}
 	//language=sql
 	query = `
@@ -103,7 +108,7 @@ func (d *DB) SaveURL(userID int, url UserURL) error {
 		return fmt.Errorf("insert into user_urls err: %s", err)
 	}
 
-	return nil
+	return conflictError
 }
 
 func (d *DB) SaveBatch(ctx context.Context, b []BatchRequest) ([]BatchResponse, error) {

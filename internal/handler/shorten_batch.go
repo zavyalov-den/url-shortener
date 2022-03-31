@@ -27,13 +27,8 @@ func ShortenBatch(db storage.Storage) http.HandlerFunc {
 
 		err = json.Unmarshal(data, &req)
 		if err != nil {
-			//res.Error = "request body is not a valid json"
-			//errData, errJSON := json.Marshal(res)
-			//if errJSON != nil {
-			//	panic(err.Error())
-			//}
 			http.Error(w, "invalid request body", http.StatusBadRequest)
-			//return
+			return
 		}
 
 		result, err := db.SaveBatch(ctx, req)
