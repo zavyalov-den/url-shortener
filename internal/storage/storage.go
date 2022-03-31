@@ -168,14 +168,6 @@ func (d *DB) SaveBatch(ctx context.Context, b []BatchRequest) ([]BatchResponse, 
 		return nil, err
 	}
 
-	//for rows.Next() {
-	//	rows.Scan()
-	//}
-	//
-	//rows.Close()
-
-	//fmt.Println("rows affected: ", ct.RowsAffected())
-
 	err = tx.Commit(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to commit a tx: %s", err.Error())
