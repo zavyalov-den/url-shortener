@@ -138,7 +138,7 @@ func (d *DB) SaveBatch(ctx context.Context, b []BatchRequest) ([]BatchResponse, 
 	for _, v := range b {
 		short := service.Shorten([]byte(v.OriginalURL))
 
-		batch.Queue(queue, short, v.CorrelationID, v.OriginalURL)
+		batch.Queue(queue, service.ShortToURL(short), v.OriginalURL, v.CorrelationID)
 
 		result = append(result, BatchResponse{
 			CorrelationID: v.CorrelationID,
