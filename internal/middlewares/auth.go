@@ -19,7 +19,7 @@ type CryptoSvc struct {
 	aesBlock   cipher.Block
 	aesGCM     cipher.AEAD
 	nonce      []byte
-	lastUserId int
+	lastUserID int
 }
 
 var (
@@ -64,7 +64,7 @@ func GetCryptoSvcInstance() *CryptoSvc {
 		aesBlock:   aesBlock,
 		aesGCM:     aesGCM,
 		nonce:      nonce,
-		lastUserId: 0,
+		lastUserID: 0,
 	}
 	return cryptoSvc
 }
@@ -87,15 +87,12 @@ func Auth(next http.Handler) http.Handler {
 		if userID == 0 {
 			cookie = c.createAuthCookie()
 			userID = c.decodeAuthCookie(cookie)
-			fmt.Println("new userID: ", userID)
 		}
 		ctx := context.WithValue(r.Context(), "auth", userID)
-		fmt.Println("new userID: ", userID)
 
 		http.SetCookie(w, cookie)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
-		return
 	})
 }
 
@@ -118,9 +115,9 @@ func (c *CryptoSvc) decodeAuthCookie(cookie *http.Cookie) int {
 }
 
 func (c *CryptoSvc) createAuthCookie() *http.Cookie {
-	c.lastUserId++
+	c.lastUserID++
 
-	byteString := hex.EncodeToString([]byte(strconv.Itoa(c.lastUserId)))
+	byteString := hex.EncodeToString([]byte(strconv.Itoa(c.lastUserID)))
 
 	sealedCookie := c.aesGCM.Seal(nil, c.nonce, []byte(byteString), nil)
 
