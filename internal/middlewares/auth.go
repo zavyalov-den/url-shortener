@@ -27,8 +27,6 @@ var (
 	n         int
 )
 
-type authKey string
-
 func RandomToken(n int) string {
 	b := make([]byte, n)
 	rand.Read(b)
@@ -74,7 +72,6 @@ func GetCryptoSvcInstance() *CryptoSvc {
 func Auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		c := GetCryptoSvcInstance()
-		var auth authKey = "auth"
 
 		cookie, err := r.Cookie("auth")
 		if err != nil {
@@ -91,7 +88,7 @@ func Auth(next http.Handler) http.Handler {
 			cookie = c.createAuthCookie()
 			userID = c.decodeAuthCookie(cookie)
 		}
-		ctx := context.WithValue(r.Context(), auth, userID)
+		ctx := context.WithValue(r.Context(), "auth", userID)
 
 		http.SetCookie(w, cookie)
 

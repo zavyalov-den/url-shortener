@@ -118,8 +118,8 @@ func (d *DB) SaveBatch(ctx context.Context, b []BatchRequest) ([]BatchResponse, 
 	}
 	//language=sql
 	queue := `insert into urls (short_url, full_url, correlation_id) values ($1, $2, $3)
--- 				on conflict (short_url, full_url, correlation_id) 
--- 				    do update set short_url = $1, full_url = $2, correlation_id = $3;
+				on conflict (short_url) 
+				    do update set full_url = $2, correlation_id = $3;
 			`
 
 	err = conn.Ping(ctx)
@@ -142,7 +142,7 @@ func (d *DB) SaveBatch(ctx context.Context, b []BatchRequest) ([]BatchResponse, 
 
 		result = append(result, BatchResponse{
 			CorrelationID: v.CorrelationID,
-			ShortURL:      short,
+			ShortURL:      service.ShortToURL(short),
 		})
 	}
 	fmt.Println("batch len: ", batch.Len())
@@ -208,7 +208,7 @@ func (d *DB) InitDB() {
 	queries := []string{`
 		CREATE TABLE if not exists urls (
 			id serial primary key,
-			short_url text not null,
+			short_url text unique not null,
 			full_url text not null,
 			correlation_id text
 		);
