@@ -46,10 +46,11 @@ func ShortenBatch(db storage.Storage) http.HandlerFunc {
 		if err != nil {
 			return
 		}
+		w.WriteHeader(http.StatusCreated)
+
 		_, err = w.Write(resp)
 		if err != nil {
 			return
 		}
-		w.WriteHeader(http.StatusCreated)
 	}
 }
