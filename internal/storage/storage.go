@@ -112,41 +112,72 @@ func (d *DB) SaveBatch(ctx context.Context, b []BatchRequest) ([]BatchResponse, 
 
 	var result []BatchResponse
 
-	//conn, err := d.db.Acquire(ctx)
-	//if err != nil {
-	//	return nil, err
-	//}
-
-	batch := &pgx.Batch{}
+	conn, err := d.db.Acquire(ctx)
+	if err != nil {
+		return nil, err
+	}
 	//language=sql
-	queue := "insert into urls (short_url, full_url, correlation_id) values ($1, $2, $3);"
+	queue := `insert into urls (short_url, full_url, correlation_id) values ($1, $2, $3)
+-- 				on conflict (short_url, full_url, correlation_id) 
+-- 				    do update set short_url = $1, full_url = $2, correlation_id = $3;
+			`
 
-	tx, err := d.db.Begin(ctx)
+	err = conn.Ping(ctx)
+	if err != nil {
+		panic("conn ping did not respond")
+	}
+
+	tx, err := conn.Begin(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start a tx: %s", err.Error())
 	}
 
+	defer tx.Rollback(ctx)
+
+	batch := &pgx.Batch{}
 	for _, v := range b {
 		short := service.Shorten([]byte(v.OriginalURL))
+
 		batch.Queue(queue, short, v.CorrelationID, v.OriginalURL)
+
 		result = append(result, BatchResponse{
 			CorrelationID: v.CorrelationID,
 			ShortURL:      short,
 		})
 	}
-	fmt.Println(batch)
-	batchResult := tx.SendBatch(ctx, batch)
+	fmt.Println("batch len: ", batch.Len())
+	br := tx.SendBatch(ctx, batch)
 
-	ct, err := batchResult.Exec()
+	//ct, err := batchResult.Exec()
+	//if err != nil {
+	//	return nil, fmt.Errorf("failed to br.exec: %s", err)
+	//}
+
+	for i := 0; i < batch.Len(); i++ {
+		ct, err := br.Exec()
+		if err != nil {
+			return nil, err
+		}
+
+		if ct.RowsAffected() != 1 {
+			return nil, fmt.Errorf("failed to exec batch query")
+		}
+	}
+	err = br.Close()
 	if err != nil {
-		return nil, fmt.Errorf("failed to br.exec: %s", err)
+		return nil, err
 	}
 
-	fmt.Println(ct.RowsAffected())
+	//for rows.Next() {
+	//	rows.Scan()
+	//}
+	//
+	//rows.Close()
+
+	//fmt.Println("rows affected: ", ct.RowsAffected())
 
 	err = tx.Commit(ctx)
 	if err != nil {
-		tx.Rollback(ctx)
 		return nil, fmt.Errorf("failed to commit a tx: %s", err.Error())
 	}
 
