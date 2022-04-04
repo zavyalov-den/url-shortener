@@ -68,7 +68,7 @@ func ShortenJSON(db storage.Storage) http.HandlerFunc {
 		})
 		var conflictError error
 
-		if errors.Is(err, storage.ConflictError) {
+		if errors.Is(err, storage.ErrConflict) {
 			conflictError = err
 		} else if err != nil {
 			http.Error(w, "failed to save url to database: "+err.Error(), 400)

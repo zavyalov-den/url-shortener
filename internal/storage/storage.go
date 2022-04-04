@@ -14,7 +14,7 @@ type DB struct {
 	db *pgxpool.Pool
 }
 
-var ConflictError = errors.New("db: insert conflict occurred")
+var ErrConflict = errors.New("db: insert conflict occurred")
 
 func (d *DB) GetURL(short string) (string, error) {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -50,6 +50,9 @@ func (d *DB) GetUserURLs(id int) []UserURL {
 		fmt.Println(err.Error())
 		return nil
 	}
+
+	defer rows.Close()
+
 	if rows.Next() {
 		fmt.Println(rows)
 		values, err := rows.Values()
@@ -70,7 +73,7 @@ func (d *DB) SaveURL(userID int, url UserURL) error {
 	defer cancel()
 
 	var urlID int
-	var conflictError error
+	var errConflict error
 
 	//language=sql
 	query := `
@@ -81,7 +84,7 @@ func (d *DB) SaveURL(userID int, url UserURL) error {
 		if errors.Is(err, pgx.ErrNoRows) {
 			// it's okay. happens :)
 		} else {
-			return fmt.Errorf("select from urls failed: %s", err)
+			return fmt.Errorf("select from urls failed: %w", err)
 		}
 	}
 	fmt.Println(urlID)
@@ -93,10 +96,10 @@ func (d *DB) SaveURL(userID int, url UserURL) error {
 
 		_, err = d.db.Query(ctx, query, url.ShortURL, url.OriginalURL)
 		if err != nil {
-			return fmt.Errorf("insert into user_urls err: %s", err)
+			return fmt.Errorf("insert into user_urls err: %w", err)
 		}
 	} else {
-		conflictError = ConflictError
+		errConflict = ErrConflict
 	}
 	//language=sql
 	query = `
@@ -105,17 +108,15 @@ func (d *DB) SaveURL(userID int, url UserURL) error {
 
 	_, err = d.db.Query(ctx, query, urlID, userID)
 	if err != nil {
-		return fmt.Errorf("insert into user_urls err: %s", err)
+		return fmt.Errorf("insert into user_urls err: %w", err)
 	}
 
-	return conflictError
+	return errConflict
 }
 
-func (d *DB) SaveBatch(ctx context.Context, b []BatchRequest) ([]BatchResponse, error) {
+func (d *DB) SaveBatch(ctx context.Context, b []BatchRequest) (result []BatchResponse, err error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-
-	var result []BatchResponse
 
 	conn, err := d.db.Acquire(ctx)
 	if err != nil {
@@ -134,10 +135,15 @@ func (d *DB) SaveBatch(ctx context.Context, b []BatchRequest) ([]BatchResponse, 
 
 	tx, err := conn.Begin(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to start a tx: %s", err.Error())
+		return nil, fmt.Errorf("failed to start a tx: %w", err)
 	}
 
-	defer tx.Rollback(ctx)
+	defer func(tx pgx.Tx, ctx context.Context) {
+		errRollback := tx.Rollback(ctx)
+		if errRollback != nil {
+			err = errRollback
+		}
+	}(tx, ctx)
 
 	batch := &pgx.Batch{}
 	for _, v := range b {
@@ -150,13 +156,7 @@ func (d *DB) SaveBatch(ctx context.Context, b []BatchRequest) ([]BatchResponse, 
 			ShortURL:      service.ShortToURL(short),
 		})
 	}
-	fmt.Println("batch len: ", batch.Len())
 	br := tx.SendBatch(ctx, batch)
-
-	//ct, err := batchResult.Exec()
-	//if err != nil {
-	//	return nil, fmt.Errorf("failed to br.exec: %s", err)
-	//}
 
 	for i := 0; i < batch.Len(); i++ {
 		ct, err := br.Exec()
@@ -175,7 +175,7 @@ func (d *DB) SaveBatch(ctx context.Context, b []BatchRequest) ([]BatchResponse, 
 
 	err = tx.Commit(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to commit a tx: %s", err.Error())
+		return nil, fmt.Errorf("failed to commit a tx: %w", err)
 	}
 
 	return result, nil
