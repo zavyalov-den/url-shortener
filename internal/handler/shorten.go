@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"github.com/zavyalov-den/url-shortener/internal/config"
 	"github.com/zavyalov-den/url-shortener/internal/service"
 	"github.com/zavyalov-den/url-shortener/internal/storage"
 	"io"
@@ -25,7 +26,8 @@ func Shorten(db storage.Storage) http.HandlerFunc {
 		short := service.Shorten(data)
 
 		ctx := r.Context()
-		userID, ok := ctx.Value("auth").(int)
+
+		userID, ok := ctx.Value(config.ContextKeyAuth).(int)
 		if !ok {
 			userID = 0
 		}

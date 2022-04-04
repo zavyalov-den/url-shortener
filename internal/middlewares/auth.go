@@ -81,7 +81,7 @@ func Auth(next http.Handler) http.Handler {
 			cookie = c.createAuthCookie()
 			userID = c.decodeAuthCookie(cookie)
 		}
-		ctx := context.WithValue(r.Context(), "auth", userID)
+		ctx := context.WithValue(r.Context(), config.ContextKeyAuth, userID)
 
 		http.SetCookie(w, cookie)
 

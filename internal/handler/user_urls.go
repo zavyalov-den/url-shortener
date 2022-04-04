@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"github.com/zavyalov-den/url-shortener/internal/config"
 	"github.com/zavyalov-den/url-shortener/internal/storage"
 	"net/http"
 )
@@ -12,7 +13,7 @@ func GetUserUrls(db storage.Storage) http.HandlerFunc {
 
 		ctx := r.Context()
 
-		userID, ok := ctx.Value("auth").(int)
+		userID, ok := ctx.Value(config.ContextKeyAuth).(int)
 		if !ok {
 			userID = 0
 		}
