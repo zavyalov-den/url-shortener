@@ -30,7 +30,7 @@ func Test_shortenJSON(t *testing.T) {
 			`{"url": "https://yandex.ru"}`,
 			want{
 				statusCode: 201,
-				body:       fmt.Sprintf(`{"result":"%s/e9db20b2"}`, config.Config.BaseURL),
+				body:       fmt.Sprintf(`{"result":"%s/e9db20b2"}`, config.GetConfigInstance().BaseURL),
 			},
 		},
 		{

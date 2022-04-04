@@ -1,20 +1,17 @@
 package main
 
-import "C"
 import (
+	"github.com/go-chi/chi/v5"
 	"github.com/zavyalov-den/url-shortener/internal/config"
 	"github.com/zavyalov-den/url-shortener/internal/handler"
 	"github.com/zavyalov-den/url-shortener/internal/middlewares"
 	"github.com/zavyalov-den/url-shortener/internal/storage"
 	"log"
 	"net/http"
-
-	"github.com/go-chi/chi/v5"
 )
 
-var cfg = config.Config
-
 func main() {
+	cfg := config.GetConfigInstance()
 	st := storage.NewStorage()
 
 	r := chi.NewRouter()

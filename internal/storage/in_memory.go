@@ -51,7 +51,7 @@ func (db *BasicStorage) saveToFile() {
 	var file *os.File
 
 	flag := os.O_CREATE | os.O_WRONLY | os.O_TRUNC
-	file, err := os.OpenFile(config.Config.FileStoragePath, flag, 0755)
+	file, err := os.OpenFile(config.GetConfigInstance().FileStoragePath, flag, 0755)
 	if err != nil {
 		panic("failed to open storage file")
 	}
@@ -72,9 +72,9 @@ func (db *BasicStorage) saveToFile() {
 func (db *BasicStorage) readFromFile() {
 	storage := make(map[string]string)
 
-	data, err := os.ReadFile(config.Config.FileStoragePath)
+	data, err := os.ReadFile(config.GetConfigInstance().FileStoragePath)
 	if err != nil {
-		if _, createErr := os.Create(config.Config.FileStoragePath); createErr != nil {
+		if _, createErr := os.Create(config.GetConfigInstance().FileStoragePath); createErr != nil {
 			panic("can't read or create storage file.")
 		}
 	}
@@ -118,9 +118,10 @@ func (db *BasicStorage) SaveBatch(ctx context.Context, b []BatchRequest) ([]Batc
 }
 
 func NewStorage() Storage {
-	if config.Config.DatabaseDSN != "" {
+	cfg := config.GetConfigInstance()
+	if cfg.DatabaseDSN != "" {
 		//if false {
-		fmt.Println("using DB: ", config.Config.DatabaseDSN)
+		fmt.Println("using DB: ", cfg.DatabaseDSN)
 		db := NewDB()
 		db.InitDB()
 		return db
@@ -131,7 +132,7 @@ func NewStorage() Storage {
 			db:       make(map[string]string),
 			userURLs: make(map[int][]UserURL),
 		}
-		if config.Config.FileStoragePath != "" {
+		if config.GetConfigInstance().FileStoragePath != "" {
 			storage.readFromFile()
 		}
 

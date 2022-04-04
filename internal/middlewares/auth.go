@@ -33,7 +33,7 @@ func GetCryptoSvcInstance() *CryptoSvc {
 	n++
 	fmt.Println("creating crypto instance #", n)
 
-	key := sha256.Sum256([]byte(config.Config.AuthKey))
+	key := sha256.Sum256([]byte(config.GetConfigInstance().AuthKey))
 
 	aesBlock, err := aes.NewCipher(key[:])
 	if err != nil {

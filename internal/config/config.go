@@ -6,7 +6,15 @@ import (
 	"github.com/caarlos0/env/v6"
 )
 
-var Config = parseConfig()
+var Config *config
+
+func GetConfigInstance() *config {
+	if Config == nil {
+		Config = parseConfig()
+	}
+
+	return Config
+}
 
 type config struct {
 	ServerAddress   string `env:"SERVER_ADDRESS" envDefault:":8080"`
@@ -28,7 +36,7 @@ func parseConfig() *config {
 	flag.StringVar(&cfg.FileStoragePath, "f", cfg.FileStoragePath, "file storage path")
 	flag.StringVar(&cfg.DatabaseDSN, "d", cfg.DatabaseDSN, "database data source name")
 
-	//flag.Parse()
+	flag.Parse()
 
 	return cfg
 }

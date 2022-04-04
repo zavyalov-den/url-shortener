@@ -195,7 +195,7 @@ func (d *DB) Ping(ctx context.Context) error {
 }
 
 func NewDB() *DB {
-	cfg, err := pgxpool.ParseConfig(config.Config.DatabaseDSN)
+	cfg, err := pgxpool.ParseConfig(config.GetConfigInstance().DatabaseDSN)
 	if err != nil {
 		panic("failed to init db")
 	}

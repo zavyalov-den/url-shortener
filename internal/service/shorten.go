@@ -15,5 +15,5 @@ func Shorten(data []byte) string {
 }
 
 func ShortToURL(s string) string {
-	return config.Config.BaseURL + "/" + s
+	return config.GetConfigInstance().BaseURL + "/" + s
 }
