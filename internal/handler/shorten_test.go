@@ -5,6 +5,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/zavyalov-den/url-shortener/internal/config"
+	"github.com/zavyalov-den/url-shortener/internal/service"
 	"github.com/zavyalov-den/url-shortener/internal/storage"
 	"io"
 	"net/http"
@@ -15,15 +16,17 @@ import (
 
 func Test_PostHandler(t *testing.T) {
 	tests := []struct {
-		name   string
-		db     storage.Storage
-		body   string
-		params string
-		want   want
+		name       string
+		db         storage.Storage
+		dbTestData bool
+		body       string
+		params     string
+		want       want
 	}{
 		{
 			"shorten",
-			newTestDB(false),
+			newTestDB(),
+			true,
 			"https://yandex.ru",
 			"",
 			want{
@@ -33,7 +36,8 @@ func Test_PostHandler(t *testing.T) {
 		},
 		{
 			"shorten negative",
-			newTestDB(false),
+			newTestDB(),
+			true,
 			"",
 			"",
 			want{
@@ -45,6 +49,14 @@ func Test_PostHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.dbTestData {
+				err := tt.db.SaveURL(1, storage.UserURL{
+					ShortURL:    service.ShortToURL("e9db20b2"),
+					OriginalURL: "",
+				})
+				assert.NoError(t, err)
+			}
+
 			ts := newPostTestServer(tt.db)
 
 			cl := ts.Client()

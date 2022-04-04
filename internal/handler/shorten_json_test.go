@@ -15,7 +15,7 @@ import (
 	"testing"
 )
 
-func Test_shortenPost(t *testing.T) {
+func Test_shortenJSON(t *testing.T) {
 	tests := []struct {
 		name       string
 		db         storage.Storage

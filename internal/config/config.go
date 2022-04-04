@@ -28,7 +28,7 @@ func parseConfig() *config {
 	flag.StringVar(&cfg.FileStoragePath, "f", cfg.FileStoragePath, "file storage path")
 	flag.StringVar(&cfg.DatabaseDSN, "d", cfg.DatabaseDSN, "database data source name")
 
-	flag.Parse()
+	//flag.Parse()
 
 	return cfg
 }
