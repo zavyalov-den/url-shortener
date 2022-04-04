@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/zavyalov-den/url-shortener/internal/storage"
 	"net/http"
 )
@@ -27,13 +26,11 @@ func GetUserUrls(db storage.Storage) http.HandlerFunc {
 
 		body, err := json.Marshal(urls)
 		if err != nil {
-			fmt.Println(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		_, err = w.Write(body)
 		if err != nil {
-			fmt.Println(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

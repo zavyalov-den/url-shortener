@@ -19,7 +19,7 @@ type config struct {
 func parseConfig() *config {
 	cfg := &config{}
 	if err := env.Parse(cfg); err != nil {
-		fmt.Println("failed to parse config", err)
+		fmt.Println("failed to parse config: %w", err)
 	}
 	//todo: secure auth key
 

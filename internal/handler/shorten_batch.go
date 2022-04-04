@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/zavyalov-den/url-shortener/internal/storage"
 	"io"
 	"net/http"
@@ -33,7 +34,7 @@ func ShortenBatch(db storage.Storage) http.HandlerFunc {
 
 		result, err := db.SaveBatch(ctx, req)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, fmt.Sprintf("failed to save batch: %s", err), http.StatusInternalServerError)
 			return
 		}
 

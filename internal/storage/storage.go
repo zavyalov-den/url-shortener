@@ -114,13 +114,15 @@ func (d *DB) SaveURL(userID int, url UserURL) error {
 	return errConflict
 }
 
-func (d *DB) SaveBatch(ctx context.Context, b []BatchRequest) (result []BatchResponse, err error) {
+func (d *DB) SaveBatch(ctx context.Context, b []BatchRequest) ([]BatchResponse, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
+	var result []BatchResponse
+
 	conn, err := d.db.Acquire(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to acquire conn: %w", err)
 	}
 	//language=sql
 	queue := `insert into urls (short_url, full_url, correlation_id) values ($1, $2, $3)
@@ -161,7 +163,7 @@ func (d *DB) SaveBatch(ctx context.Context, b []BatchRequest) (result []BatchRes
 	for i := 0; i < batch.Len(); i++ {
 		ct, err := br.Exec()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to exec batch statement: %w", err)
 		}
 
 		if ct.RowsAffected() != 1 {
@@ -170,7 +172,7 @@ func (d *DB) SaveBatch(ctx context.Context, b []BatchRequest) (result []BatchRes
 	}
 	err = br.Close()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to close batch results: %w", err)
 	}
 
 	err = tx.Commit(ctx)

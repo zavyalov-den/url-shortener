@@ -37,12 +37,14 @@ func GetCryptoSvcInstance() *CryptoSvc {
 
 	aesBlock, err := aes.NewCipher(key[:])
 	if err != nil {
-		fmt.Println("new cipher", err)
+		//fmt.Println("new cipher", err)
+		panic(err)
 	}
 
 	aesGCM, err := cipher.NewGCM(aesBlock)
 	if err != nil {
-		fmt.Println("new gcm", err)
+		//fmt.Println("new gcm", err)
+		panic(err)
 	}
 
 	nonce := make([]byte, aesGCM.NonceSize())
@@ -67,7 +69,6 @@ func Auth(next http.Handler) http.Handler {
 
 		cookie, err := r.Cookie("auth")
 		if err != nil {
-			fmt.Println(err)
 			cookie = c.createAuthCookie()
 		}
 		//if err = cookie.Valid(); err != nil {
@@ -92,11 +93,13 @@ func (c *CryptoSvc) decodeAuthCookie(cookie *http.Cookie) int {
 	cookieBytes, err := hex.DecodeString(cookie.Value)
 	if err != nil {
 		fmt.Println("failed to decode a cookie :(", err)
+		return 0
 	}
 
 	src, err := c.aesGCM.Open(nil, c.nonce, cookieBytes, nil)
 	if err != nil {
 		fmt.Println("gcm open failed: ", err)
+		return 0
 	}
 
 	userID, err := strconv.Atoi(string(src))
