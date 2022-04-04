@@ -29,7 +29,7 @@ func Test_GetHandler(t *testing.T) {
 		{
 			"expand",
 			newTestDB(),
-			false,
+			true,
 			"",
 			"/e9db20b2",
 			want{
@@ -40,7 +40,7 @@ func Test_GetHandler(t *testing.T) {
 		{
 			"returns 404 on url that doesn't exist",
 			newTestDB(),
-			true,
+			false,
 			"",
 			"/asdfa",
 			want{
