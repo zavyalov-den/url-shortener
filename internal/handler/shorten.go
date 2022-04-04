@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"github.com/zavyalov-den/url-shortener/internal/service"
 	"github.com/zavyalov-den/url-shortener/internal/storage"
 	"io"
@@ -33,12 +34,21 @@ func Shorten(db storage.Storage) http.HandlerFunc {
 			ShortURL:    service.ShortToURL(short),
 			OriginalURL: string(data),
 		})
-		if err != nil {
+		var conflictError error
+
+		if errors.Is(err, storage.ErrConflict) {
+			conflictError = err
+		} else if err != nil {
 			http.Error(w, "failed to save url to database: "+err.Error(), 400)
 			return
 		}
 
-		w.WriteHeader(http.StatusCreated)
+		if conflictError != nil {
+			w.WriteHeader(http.StatusConflict)
+		} else {
+			w.WriteHeader(http.StatusCreated)
+		}
+
 		_, err = w.Write([]byte(service.ShortToURL(short)))
 		if err != nil {
 			http.Error(w, "invalid requestURL", http.StatusBadRequest)
