@@ -22,6 +22,7 @@ func main() {
 	r.Post("/api/shorten/batch", handler.ShortenBatch(st))
 	r.Post("/api/shorten", handler.ShortenJSON(st))
 	r.Get("/api/user/urls", handler.GetUserUrls(st))
+	r.Delete("/api/user/urls", handler.Delete(st))
 	r.Get("/{shortUrl}", handler.GetFullURL(st))
 	r.Post("/", handler.Shorten(st))
 	r.Get("/ping", handler.PingDB(st))

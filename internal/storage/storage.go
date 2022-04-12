@@ -14,6 +14,31 @@ type DB struct {
 	db *pgxpool.Pool
 }
 
+func (d *DB) DeleteBatch(ctx context.Context, userID int, arr []string) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	return nil
+}
+
+func (d *DB) delete(ctx context.Context, userID int, short string) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	//language=sql
+	query := `
+		UPDATE urls set is_deleted = true 
+		FROM user_urls uu
+		WHERE urls.id = uu.url_id and uu.user_id = $1 and urls.short_url = $2
+	`
+
+	_, err := d.db.Exec(ctx, query, userID, short)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 var ErrConflict = errors.New("db: insert conflict occurred")
 
 func (d *DB) GetURL(short string) (string, error) {
@@ -217,7 +242,8 @@ func (d *DB) InitDB() {
 			id serial primary key,
 			short_url text unique not null,
 			full_url text not null,
-			correlation_id text
+			correlation_id text,
+			is_deleted bool default false
 		);
 		`, `
 		CREATE TABLE if not exists user_urls (

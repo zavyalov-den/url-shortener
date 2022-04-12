@@ -14,11 +14,16 @@ type Storage interface {
 	SaveURL(id int, url UserURL) error
 	Ping(ctx context.Context) error
 	SaveBatch(ctx context.Context, b []BatchRequest) ([]BatchResponse, error)
+	DeleteBatch(ctx context.Context, id int, arr []string) error
 }
 
 type BasicStorage struct {
 	db       map[string]string
 	userURLs map[int][]UserURL
+}
+
+func (db *BasicStorage) DeleteBatch(ctx context.Context, id int, arr []string) error {
+	return fmt.Errorf("method is unavailable with in memory storage")
 }
 
 var _ Storage = (*BasicStorage)(nil)
