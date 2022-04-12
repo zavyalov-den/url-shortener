@@ -18,6 +18,14 @@ func (d *DB) DeleteBatch(ctx context.Context, userID int, arr []string) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
+	for _, s := range arr {
+		//err := d.delete(ctx, userID, service.ShortToURL(s))
+		err := d.delete(ctx, userID, s)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+
 	return nil
 }
 
@@ -26,15 +34,21 @@ func (d *DB) delete(ctx context.Context, userID int, short string) error {
 	defer cancel()
 	//language=sql
 	query := `
+-- 		UPDATE urls set is_deleted = true 
+-- 		FROM user_urls uu
+-- 		WHERE urls.id = uu.url_id and uu.user_id = $1 and urls.correlation_id= $2
+
 		UPDATE urls set is_deleted = true 
 		FROM user_urls uu
-		WHERE urls.id = uu.url_id and uu.user_id = $1 and urls.short_url = $2
+		WHERE urls.id = uu.url_id and uu.user_id = $1 and urls.correlation_id= $2
 	`
 
-	_, err := d.db.Exec(ctx, query, userID, short)
+	res, err := d.db.Exec(ctx, query, userID, short)
 	if err != nil {
 		return err
 	}
+	fmt.Println(short)
+	fmt.Println(res.RowsAffected())
 
 	return nil
 }
