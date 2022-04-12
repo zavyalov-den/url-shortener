@@ -22,7 +22,7 @@ type CryptoSvc struct {
 
 var (
 	cryptoSvc *CryptoSvc
-	n         int
+	//n         int
 )
 
 func GetCryptoSvcInstance() *CryptoSvc {
@@ -30,8 +30,8 @@ func GetCryptoSvcInstance() *CryptoSvc {
 		return cryptoSvc
 	}
 
-	n++
-	fmt.Println("creating crypto instance #", n)
+	//n++
+	//fmt.Println("creating crypto instance #", n)
 
 	key := sha256.Sum256([]byte(config.GetConfigInstance().AuthKey))
 

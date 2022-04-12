@@ -125,14 +125,11 @@ func (db *BasicStorage) SaveBatch(ctx context.Context, b []BatchRequest) ([]Batc
 func NewStorage() Storage {
 	cfg := config.GetConfigInstance()
 	if cfg.DatabaseDSN != "" {
-		//if false {
-		fmt.Println("using DB: ", cfg.DatabaseDSN)
 		db := NewDB()
 		db.InitDB()
 		return db
 
 	} else {
-		fmt.Println("in memory storage")
 		storage := &BasicStorage{
 			db:       make(map[string]string),
 			userURLs: make(map[int][]UserURL),
