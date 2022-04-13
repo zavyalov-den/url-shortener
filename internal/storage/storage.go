@@ -22,9 +22,9 @@ func (d *DB) DeleteBatch(ctx context.Context, userID int, arr []string) error {
 	var wg = &sync.WaitGroup{}
 
 	for _, s := range arr {
+		wg.Add(1)
 		go func(s string) {
-			wg.Add(1)
-			err := d.delete(userID, service.ShortToURL(s))
+			err := d.delete(ctx, userID, service.ShortToURL(s))
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -37,7 +37,7 @@ func (d *DB) DeleteBatch(ctx context.Context, userID int, arr []string) error {
 	return nil
 }
 
-func (d *DB) delete(userID int, short string) error {
+func (d *DB) delete(ctx context.Context, userID int, short string) error {
 	//language=sql
 	query := `
 			UPDATE urls
@@ -47,12 +47,10 @@ func (d *DB) delete(userID int, short string) error {
 			WHERE urls.id = uu.url_id and uu.user_id = $1 and urls.short_url = $2;
 		`
 
-	res, err := d.db.Exec(context.Background(), query, userID, short)
+	_, err := d.db.Exec(ctx, query, userID, short)
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
-	fmt.Println(res.RowsAffected())
 
 	return nil
 }
