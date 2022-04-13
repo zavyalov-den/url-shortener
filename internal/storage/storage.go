@@ -19,8 +19,8 @@ func (d *DB) DeleteBatch(ctx context.Context, userID int, arr []string) error {
 	defer cancel()
 
 	for _, s := range arr {
-		//err := d.delete(ctx, userID, service.ShortToURL(s))
-		err := d.delete(ctx, userID, s)
+		err := d.delete(ctx, userID, service.ShortToURL(s))
+		//err := d.delete(ctx, userID, s)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -34,13 +34,11 @@ func (d *DB) delete(ctx context.Context, userID int, short string) error {
 	defer cancel()
 	//language=sql
 	query := `
--- 		UPDATE urls set is_deleted = true 
--- 		FROM user_urls uu
--- 		WHERE urls.id = uu.url_id and uu.user_id = $1 and urls.correlation_id= $2
-
-		UPDATE urls set is_deleted = true 
+		UPDATE urls
+		SET is_deleted = true
 		FROM user_urls uu
-		WHERE urls.id = uu.url_id and uu.user_id = $1 and urls.correlation_id= $2
+-- 		WHERE urls.id = uu.url_id and uu.user_id = $1 and urls.correlation_id = $2;
+		WHERE urls.id = uu.url_id and uu.user_id = $1 and urls.short_url = $2;
 	`
 
 	res, err := d.db.Exec(ctx, query, userID, short)
@@ -54,19 +52,27 @@ func (d *DB) delete(ctx context.Context, userID int, short string) error {
 }
 
 var ErrConflict = errors.New("db: insert conflict occurred")
+var ErrRowDeleted = errors.New("db: row was deleted")
 
 func (d *DB) GetURL(short string) (string, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	var fullURL string
+	var isDeleted bool
 	//language=sql
 	query := `
-		select full_url from urls where short_url = $1 limit 1;
+		select urls.full_url, urls.is_deleted from urls 
+		join user_urls uu on urls.id = uu.url_id
+		where short_url = $1 limit 1;
 	`
-	err := d.db.QueryRow(ctx, query, short).Scan(&fullURL)
+	err := d.db.QueryRow(ctx, query, short).Scan(&fullURL, &isDeleted)
 	if err != nil {
 		return "", err
+	}
+
+	if isDeleted {
+		return "", ErrRowDeleted
 	}
 
 	return fullURL, nil

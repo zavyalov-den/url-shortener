@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/zavyalov-den/url-shortener/internal/service"
 	"github.com/zavyalov-den/url-shortener/internal/storage"
@@ -13,6 +14,10 @@ func GetFullURL(db storage.Storage) http.HandlerFunc {
 
 		longURL, err := db.GetURL(service.ShortToURL(short))
 		if err != nil {
+			if errors.Is(err, storage.ErrRowDeleted) {
+				w.WriteHeader(http.StatusGone)
+				return
+			}
 			http.NotFound(w, r)
 			return
 		}
