@@ -18,7 +18,7 @@ func GetFullURL(db storage.Storage) http.HandlerFunc {
 				w.WriteHeader(http.StatusGone)
 				return
 			}
-			http.NotFound(w, r)
+			http.Error(w, err.Error(), 404)
 			return
 		}
 

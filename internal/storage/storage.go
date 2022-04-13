@@ -63,8 +63,7 @@ func (d *DB) GetURL(short string) (string, error) {
 	//language=sql
 	query := `
 		select urls.full_url, urls.is_deleted from urls 
-		join user_urls uu on urls.id = uu.url_id
-		where short_url = $1 limit 1;
+		where urls.short_url = $1 limit 1;
 	`
 	err := d.db.QueryRow(ctx, query, short).Scan(&fullURL, &isDeleted)
 	if err != nil {
