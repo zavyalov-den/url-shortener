@@ -8,6 +8,7 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/zavyalov-den/url-shortener/internal/config"
 	"github.com/zavyalov-den/url-shortener/internal/service"
+	"sync"
 )
 
 type DB struct {
@@ -18,13 +19,20 @@ func (d *DB) DeleteBatch(ctx context.Context, userID int, arr []string) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
+	var wg = sync.WaitGroup{}
+
 	for _, s := range arr {
-		err := d.delete(ctx, userID, service.ShortToURL(s))
-		//err := d.delete(ctx, userID, s)
-		if err != nil {
-			fmt.Println(err)
-		}
+		go func(s string) {
+			wg.Add(1)
+			err := d.delete(ctx, userID, service.ShortToURL(s))
+			if err != nil {
+				fmt.Println(err)
+			}
+			wg.Done()
+		}(s)
 	}
+
+	wg.Wait()
 
 	return nil
 }

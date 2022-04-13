@@ -30,7 +30,6 @@ func Delete(db storage.Storage) http.HandlerFunc {
 			http.Error(w, "request body data is not valid", 400)
 			return
 		}
-
 		ctx := r.Context()
 
 		userID, ok := ctx.Value(config.ContextKeyAuth).(int)
@@ -41,7 +40,6 @@ func Delete(db storage.Storage) http.HandlerFunc {
 		err = db.DeleteBatch(ctx, userID, arr)
 		if err != nil {
 			fmt.Printf("failed to delete batch: %s", err.Error())
-
 		}
 
 		w.WriteHeader(http.StatusAccepted)
