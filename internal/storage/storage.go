@@ -19,12 +19,12 @@ func (d *DB) DeleteBatch(ctx context.Context, userID int, arr []string) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	var wg = sync.WaitGroup{}
+	var wg = &sync.WaitGroup{}
 
 	for _, s := range arr {
 		go func(s string) {
 			wg.Add(1)
-			err := d.delete(ctx, userID, service.ShortToURL(s))
+			err := d.delete(userID, service.ShortToURL(s))
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -37,23 +37,21 @@ func (d *DB) DeleteBatch(ctx context.Context, userID int, arr []string) error {
 	return nil
 }
 
-func (d *DB) delete(ctx context.Context, userID int, short string) error {
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
+func (d *DB) delete(userID int, short string) error {
 	//language=sql
 	query := `
-		UPDATE urls
-		SET is_deleted = true
-		FROM user_urls uu
--- 		WHERE urls.id = uu.url_id and uu.user_id = $1 and urls.correlation_id = $2;
-		WHERE urls.id = uu.url_id and uu.user_id = $1 and urls.short_url = $2;
-	`
+			UPDATE urls
+			SET is_deleted = true
+			FROM user_urls uu
+	-- 		WHERE urls.id = uu.url_id and uu.user_id = $1 and urls.correlation_id = $2;
+			WHERE urls.id = uu.url_id and uu.user_id = $1 and urls.short_url = $2;
+		`
 
-	res, err := d.db.Exec(ctx, query, userID, short)
+	res, err := d.db.Exec(context.Background(), query, userID, short)
 	if err != nil {
+		fmt.Println(err)
 		return err
 	}
-	fmt.Println(short)
 	fmt.Println(res.RowsAffected())
 
 	return nil
