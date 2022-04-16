@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
+
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/zavyalov-den/url-shortener/internal/config"
@@ -212,29 +214,24 @@ func (d *DB) InitDB() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	// language=sql
-	queries := []string{`
+	query := `
 		CREATE TABLE if not exists urls (
 			id serial primary key,
 			short_url text unique not null,
 			full_url text not null,
 			correlation_id text
 		);
-		`, `
 		CREATE TABLE if not exists user_urls (
-		    user_id int, -- references users.id
+		    user_id int,
 		    url_id int
 		);
--- 
--- 		CREATE TABLE users (
--- 		    id serial primary key,
+ 		CREATE TABLE users (
+ 		    id serial primary key,
 -- 		    token text
--- 		)
-	`}
+ 		)
+	`
 
-	for _, query := range queries {
-		_, err := d.db.Query(ctx, query)
-		if err != nil {
-			fmt.Println(err)
-		}
+	if _, err := d.db.Exec(context.Background(), query); err != nil {
+		log.Fatal(err)
 	}
 }
