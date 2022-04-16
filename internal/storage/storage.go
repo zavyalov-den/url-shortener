@@ -231,7 +231,7 @@ func (d *DB) InitDB() {
  		)
 	`
 
-	if _, err := d.db.Exec(context.Background(), query); err != nil {
+	if _, err := d.db.Exec(ctx, query); err != nil {
 		log.Fatal(err)
 	}
 }
