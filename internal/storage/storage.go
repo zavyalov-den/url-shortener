@@ -227,7 +227,7 @@ func (d *DB) InitDB() {
 		);
  		CREATE TABLE users (
  		    id serial primary key,
--- 		    token text
+ 		    token text
  		)
 	`
 
