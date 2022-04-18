@@ -34,6 +34,7 @@ func Delete(db storage.Storage) http.HandlerFunc {
 
 		userID, ok := ctx.Value(config.ContextKeyAuth).(int)
 		if !ok {
+			fmt.Println("not ok (delete): ", userID)
 			userID = 0
 		}
 

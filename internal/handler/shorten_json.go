@@ -58,6 +58,7 @@ func ShortenJSON(db storage.Storage) http.HandlerFunc {
 		ctx := r.Context()
 		userID, ok := ctx.Value(config.ContextKeyAuth).(int)
 		if !ok {
+			fmt.Println("not ok (shorten json): ", userID)
 			userID = 0
 		}
 

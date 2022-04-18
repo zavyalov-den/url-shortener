@@ -135,7 +135,7 @@ func (d *DB) SaveURL(userID int, url UserURL) error {
 			return fmt.Errorf("select from urls failed: %w", err)
 		}
 	}
-	fmt.Println(urlID)
+	fmt.Println("url id: ", urlID)
 	if urlID == 0 {
 		//language=sql
 		query = `
