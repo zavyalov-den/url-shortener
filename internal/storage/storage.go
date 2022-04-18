@@ -139,10 +139,11 @@ func (d *DB) SaveURL(userID int, url UserURL) error {
 	if urlID == 0 {
 		//language=sql
 		query = `
-		insert into urls (short_url, full_url) VALUES ($1, $2);
+		insert into urls (short_url, full_url) VALUES ($1, $2)
+		returning id;
 		`
 
-		_, err = d.db.Exec(ctx, query, url.ShortURL, url.OriginalURL)
+		err = d.db.QueryRow(ctx, query, url.ShortURL, url.OriginalURL).Scan(&urlID)
 		if err != nil {
 			return fmt.Errorf("insert into user_urls err: %w", err)
 		}
