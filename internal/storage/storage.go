@@ -142,7 +142,7 @@ func (d *DB) SaveURL(userID int, url UserURL) error {
 		insert into urls (short_url, full_url) VALUES ($1, $2);
 		`
 
-		_, err = d.db.Query(ctx, query, url.ShortURL, url.OriginalURL)
+		_, err = d.db.Exec(ctx, query, url.ShortURL, url.OriginalURL)
 		if err != nil {
 			return fmt.Errorf("insert into user_urls err: %w", err)
 		}
@@ -154,7 +154,7 @@ func (d *DB) SaveURL(userID int, url UserURL) error {
 		insert into user_urls (url_id, user_id) VALUES ($1, $2);
 		`
 
-	_, err = d.db.Query(ctx, query, urlID, userID)
+	_, err = d.db.Exec(ctx, query, urlID, userID)
 	if err != nil {
 		return fmt.Errorf("insert into user_urls err: %w", err)
 	}
@@ -245,12 +245,12 @@ func (d *DB) Ping(ctx context.Context) error {
 func NewDB() *DB {
 	cfg, err := pgxpool.ParseConfig(config.GetConfigInstance().DatabaseDSN)
 	if err != nil {
-		panic("failed to init db")
+		panic(err)
 	}
 
 	db, err := pgxpool.ConnectConfig(context.Background(), cfg)
 	if err != nil {
-		panic("db connection failed")
+		panic(err)
 	}
 
 	return &DB{db: db}
@@ -260,28 +260,22 @@ func (d *DB) InitDB() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	// language=sql
-	queries := []string{`
-		CREATE TABLE if not exists urls (
+	queries := []string{
+		`CREATE TABLE if not exists urls (
 			id serial primary key,
 			short_url text unique not null,
 			full_url text not null,
 			correlation_id text,
 			is_deleted bool default false
-		);
-		`, `
-		CREATE TABLE if not exists user_urls (
+		);`,
+		`CREATE TABLE if not exists user_urls (
 		    user_id int, -- references users.id
 		    url_id int
-		);
--- 
--- 		CREATE TABLE users (
--- 		    id serial primary key,
--- 		    token text
--- 		)
-	`}
+		);`,
+	}
 
 	for _, query := range queries {
-		_, err := d.db.Query(ctx, query)
+		_, err := d.db.Exec(ctx, query)
 		if err != nil {
 			fmt.Println(err)
 		}

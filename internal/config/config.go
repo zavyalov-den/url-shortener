@@ -3,6 +3,7 @@ package config
 import (
 	"flag"
 	"fmt"
+
 	"github.com/caarlos0/env/v6"
 )
 
@@ -19,9 +20,9 @@ func GetConfigInstance() *config {
 type config struct {
 	ServerAddress   string `env:"SERVER_ADDRESS" envDefault:":8080"`
 	BaseURL         string `env:"BASE_URL" envDefault:"http://localhost:8080"`
-	FileStoragePath string `env:"FILE_STORAGE_PATH" envDefault:"./storage.json"`
+	FileStoragePath string `env:"FILE_STORAGE_PATH"`
 	AuthKey         string `env:"AUTH_KEY" envDefault:"auth"`
-	DatabaseDSN     string `env:"DATABASE_DSN" envDefault:""`
+	DatabaseDSN     string `env:"DATABASE_DSN"`
 }
 
 func parseConfig() *config {

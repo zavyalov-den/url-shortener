@@ -4,8 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/zavyalov-den/url-shortener/internal/config"
 	"os"
+
+	"github.com/zavyalov-den/url-shortener/internal/config"
 )
 
 type Storage interface {
@@ -99,7 +100,9 @@ func (db *BasicStorage) GetUserURLs(id int) []UserURL {
 
 func (db *BasicStorage) SaveURL(userID int, url UserURL) error {
 	db.db[url.ShortURL] = url.OriginalURL
-	db.saveToFile()
+	if config.GetConfigInstance().FileStoragePath != "" {
+		db.saveToFile()
+	}
 
 	urls := db.userURLs[userID]
 
