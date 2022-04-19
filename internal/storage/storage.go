@@ -1,87 +1,284 @@
 package storage
 
 import (
-	"encoding/json"
+	"context"
+	"errors"
 	"fmt"
-	"os"
-
+	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/zavyalov-den/url-shortener/internal/config"
+	"github.com/zavyalov-den/url-shortener/internal/service"
+	"sync"
 )
 
 type DB struct {
-	db    map[string]string
-	debug bool
+	db *pgxpool.Pool
 }
 
-func (db *DB) Save(key, value string) {
-	db.db[key] = value
-	if !db.debug {
-		db.saveToFile()
+func (d *DB) DeleteBatch(ctx context.Context, userID int, arr []string) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	var wg = &sync.WaitGroup{}
+
+	for _, s := range arr {
+		wg.Add(1)
+		go func(s string) {
+			err := d.delete(ctx, userID, service.ShortToURL(s))
+			if err != nil {
+				fmt.Println(err)
+			}
+			wg.Done()
+		}(s)
 	}
+
+	wg.Wait()
+
+	return nil
 }
 
-func (db *DB) Get(key string) (string, error) {
-	longURL, ok := db.db[key]
-	if !ok {
-		return "", fmt.Errorf("failed to get an URL")
-	}
+func (d *DB) delete(ctx context.Context, userID int, short string) error {
+	//language=sql
+	query := `
+			UPDATE urls
+			SET is_deleted = true
+			FROM user_urls uu
+	-- 		WHERE urls.id = uu.url_id and uu.user_id = $1 and urls.correlation_id = $2;
+			WHERE urls.id = uu.url_id and uu.user_id = $1 and urls.short_url = $2;
+		`
 
-	return longURL, nil
-}
-
-func (db *DB) saveToFile() {
-	var file *os.File
-
-	defer file.Close()
-
-	flag := os.O_CREATE | os.O_WRONLY | os.O_TRUNC
-	file, err := os.OpenFile(config.Conf.FileStoragePath, flag, 0777)
+	_, err := d.db.Exec(ctx, query, userID, short)
 	if err != nil {
-		if _, createErr := os.Create(config.Conf.FileStoragePath); createErr != nil {
-			panic("can't read or create storage file.")
+		return err
+	}
+
+	return nil
+}
+
+var ErrConflict = errors.New("db: insert conflict occurred")
+var ErrRowDeleted = errors.New("db: row was deleted")
+
+func (d *DB) GetURL(short string) (string, error) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	var fullURL string
+	var isDeleted bool
+	//language=sql
+	query := `
+		select urls.full_url, urls.is_deleted from urls 
+		where urls.short_url = $1 limit 1;
+	`
+	err := d.db.QueryRow(ctx, query, short).Scan(&fullURL, &isDeleted)
+	if err != nil {
+		return "", err
+	}
+
+	if isDeleted {
+		return "", ErrRowDeleted
+	}
+
+	return fullURL, nil
+}
+
+func (d *DB) GetUserURLs(id int) []UserURL {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	var result []UserURL
+
+	//language=sql
+	query := `
+		select urls.short_url, urls.full_url from urls 
+		join user_urls u on urls.id = u.url_id
+		where u.user_id = $1; 
+	`
+	rows, err := d.db.Query(ctx, query, id)
+	if err != nil {
+		fmt.Println(err.Error())
+		return nil
+	}
+
+	defer rows.Close()
+
+	if rows.Next() {
+		fmt.Println(rows)
+		values, err := rows.Values()
+		if err != nil {
+			return nil
+		}
+		result = append(result, UserURL{
+			ShortURL:    values[0].(string),
+			OriginalURL: values[1].(string),
+		})
+	}
+
+	return result
+}
+
+func (d *DB) SaveURL(userID int, url UserURL) error {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	var urlID int
+	var errConflict error
+
+	//language=sql
+	query := `
+		SELECT id from urls where short_url = $1;
+	`
+	err := d.db.QueryRow(ctx, query, url.ShortURL).Scan(&urlID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			// it's okay. happens :)
+		} else {
+			return fmt.Errorf("select from urls failed: %w", err)
 		}
 	}
+	fmt.Println("url id: ", urlID)
+	if urlID == 0 {
+		//language=sql
+		query = `
+		insert into urls (short_url, full_url) VALUES ($1, $2)
+		returning id;
+		`
 
-	data, err := json.Marshal(db.db)
+		err = d.db.QueryRow(ctx, query, url.ShortURL, url.OriginalURL).Scan(&urlID)
+		if err != nil {
+			return fmt.Errorf("insert into user_urls err: %w", err)
+		}
+	} else {
+		errConflict = ErrConflict
+	}
+	//language=sql
+	query = `
+		insert into user_urls (url_id, user_id) VALUES ($1, $2);
+		`
+
+	_, err = d.db.Exec(ctx, query, urlID, userID)
 	if err != nil {
-		panic("failed to read from DB")
+		return fmt.Errorf("insert into user_urls err: %w", err)
 	}
 
-	_, err = file.Write(data)
-	if err != nil {
-		panic("failed to write to DB")
-	}
+	return errConflict
 }
 
-func (db *DB) readFromFile() {
-	storage := make(map[string]string)
+func (d *DB) SaveBatch(ctx context.Context, b []BatchRequest) ([]BatchResponse, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
-	data, err := os.ReadFile(config.Conf.FileStoragePath)
+	var result []BatchResponse
+
+	conn, err := d.db.Acquire(ctx)
 	if err != nil {
-		if _, createErr := os.Create(config.Conf.FileStoragePath); createErr != nil {
-			panic("can't read or create storage file.")
+		return nil, fmt.Errorf("failed to acquire conn: %w", err)
+	}
+	//language=sql
+	queue := `insert into urls (short_url, full_url, correlation_id) values ($1, $2, $3)
+				on conflict (short_url) 
+				    do update set full_url = $2, correlation_id = $3;
+			`
+
+	err = conn.Ping(ctx)
+	if err != nil {
+		panic("conn ping did not respond")
+	}
+
+	tx, err := conn.Begin(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to start a tx: %w", err)
+	}
+
+	defer func(tx pgx.Tx, ctx context.Context) {
+		errRollback := tx.Rollback(ctx)
+		if errRollback != nil {
+			err = errRollback
+		}
+	}(tx, ctx)
+
+	batch := &pgx.Batch{}
+	for _, v := range b {
+		short := service.Shorten([]byte(v.OriginalURL))
+
+		batch.Queue(queue, service.ShortToURL(short), v.OriginalURL, v.CorrelationID)
+
+		result = append(result, BatchResponse{
+			CorrelationID: v.CorrelationID,
+			ShortURL:      service.ShortToURL(short),
+		})
+	}
+	br := tx.SendBatch(ctx, batch)
+
+	for i := 0; i < batch.Len(); i++ {
+		ct, err := br.Exec()
+		if err != nil {
+			return nil, fmt.Errorf("failed to exec batch statement: %w", err)
 		}
 
+		if ct.RowsAffected() != 1 {
+			return nil, fmt.Errorf("failed to exec batch query")
+		}
+	}
+	err = br.Close()
+	if err != nil {
+		return nil, fmt.Errorf("failed to close batch results: %w", err)
+	}
+
+	err = tx.Commit(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to commit a tx: %w", err)
+	}
+
+	return result, nil
+}
+
+func (d *DB) Ping(ctx context.Context) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	err := d.db.Ping(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func NewDB() *DB {
+	cfg, err := pgxpool.ParseConfig(config.GetConfigInstance().DatabaseDSN)
+	if err != nil {
 		panic(err)
 	}
 
-	err = json.Unmarshal(data, &storage)
+	db, err := pgxpool.ConnectConfig(context.Background(), cfg)
 	if err != nil {
-		fmt.Println(err.Error())
+		panic(err)
 	}
 
-	db.db = storage
+	return &DB{db: db}
 }
 
-func NewStorage(debug bool) *DB {
-	storage := &DB{
-		db: make(map[string]string),
-	}
-	if !debug {
-		storage.readFromFile()
+func (d *DB) InitDB() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	// language=sql
+	queries := []string{
+		`CREATE TABLE if not exists urls (
+			id serial primary key,
+			short_url text unique not null,
+			full_url text not null,
+			correlation_id text,
+			is_deleted bool default false
+		);`,
+		`CREATE TABLE if not exists user_urls (
+		    user_id int, -- references users.id
+		    url_id int
+		);`,
 	}
 
-	storage.debug = debug
-
-	return storage
+	for _, query := range queries {
+		_, err := d.db.Exec(ctx, query)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
 }

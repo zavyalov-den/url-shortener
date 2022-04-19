@@ -3,42 +3,41 @@ package config
 import (
 	"flag"
 	"fmt"
+
 	"github.com/caarlos0/env/v6"
 )
 
-var Conf = parseConfig()
+var Config *config
 
-// Раньше здесь была вся логика по обработке переменных среды и флагам,
-// но переехала в main, т.к. при запуске тестов через go test ./... возникала ошибка
-
-func parseConfig() *config {
-	cfg := &config{}
-
-	if err := env.Parse(cfg); err != nil {
-		fmt.Println("failed to parse config: " + err.Error())
+func GetConfigInstance() *config {
+	if Config == nil {
+		Config = parseConfig()
 	}
 
-	serverAddress := flag.String("a", "", "server address")
-	baseURL := flag.String("b", "", "base url")
-	fileStoragePath := flag.String("f", "", "file storage path")
-
-	flag.Parse()
-
-	if serverAddress != nil && *serverAddress != "" {
-		cfg.ServerAddress = *serverAddress
-	}
-	if baseURL != nil && *baseURL != "" {
-		cfg.BaseURL = *baseURL
-	}
-	if fileStoragePath != nil && *fileStoragePath != "" {
-		cfg.FileStoragePath = *fileStoragePath
-	}
-
-	return cfg
+	return Config
 }
 
 type config struct {
 	ServerAddress   string `env:"SERVER_ADDRESS" envDefault:":8080"`
 	BaseURL         string `env:"BASE_URL" envDefault:"http://localhost:8080"`
-	FileStoragePath string `env:"FILE_STORAGE_PATH" envDefault:"./storage.json"`
+	FileStoragePath string `env:"FILE_STORAGE_PATH"`
+	AuthKey         string `env:"AUTH_KEY" envDefault:"auth"`
+	DatabaseDSN     string `env:"DATABASE_DSN"`
+}
+
+func parseConfig() *config {
+	cfg := &config{}
+	if err := env.Parse(cfg); err != nil {
+		fmt.Println("failed to parse config: %w", err)
+	}
+	//todo: secure auth key
+
+	flag.StringVar(&cfg.ServerAddress, "a", cfg.ServerAddress, "server address")
+	flag.StringVar(&cfg.BaseURL, "b", cfg.BaseURL, "base url")
+	flag.StringVar(&cfg.FileStoragePath, "f", cfg.FileStoragePath, "file storage path")
+	flag.StringVar(&cfg.DatabaseDSN, "d", cfg.DatabaseDSN, "database data source name")
+
+	flag.Parse()
+
+	return cfg
 }

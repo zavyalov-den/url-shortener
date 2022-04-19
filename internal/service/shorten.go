@@ -3,6 +3,7 @@ package service
 import (
 	"crypto"
 	"encoding/hex"
+	"github.com/zavyalov-den/url-shortener/internal/config"
 )
 
 func Shorten(data []byte) string {
@@ -11,4 +12,8 @@ func Shorten(data []byte) string {
 	short := hex.EncodeToString(md5.Sum(nil))[:8]
 
 	return short
+}
+
+func ShortToURL(s string) string {
+	return config.GetConfigInstance().BaseURL + "/" + s
 }
